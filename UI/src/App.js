@@ -105,7 +105,7 @@ function App() {
   const [txPending, setTXPending] = useState(false);
   const [feedback, setFeedback] = useState(``);
   const [costToRent, setCostToRent] = useState(0);
-  const [totalCostToRent, setTotalCostToRent] = useState('0');
+  const [totalCostToRent, setTotalCostToRent] = useState("0");
   const [baycIds, setBaycIds] = useState(new Array(10000).fill(false));
   const [maycIds, setMaycIds] = useState(new Array(40000).fill(false));
   const [dogIds, setDogIds] = useState(new Array(10000).fill(false));
@@ -115,32 +115,39 @@ function App() {
     NETWORK: {
       NAME: "Ethereum",
       SYMBOL: "ETH",
-      ID: 1
+      ID: 1,
     },
-    SHOW_BACKGROUND: true
+    SHOW_BACKGROUND: true,
   });
 
-  
   const loanDogs = () => {
     let rentCostWEI = 0;
     try {
       rentCostWEI = Web3.utils.toWei(costToRent);
-    } catch(err) {}
-    setFeedback('ALLOWING RENT-ING @ ' + (Math.floor(rentCostWEI/10**14)/10**4) + 'E');
+    } catch (err) {}
+    setFeedback(
+      "ALLOWING RENT-ING @ " +
+        Math.floor(rentCostWEI / 10 ** 14) / 10 ** 4 +
+        "E"
+    );
     setTXPending(true);
     let dogsToLoan = [];
-    for(let i = 0;i < dog.bakcTokens.length;i++) {
-      if(dogIds[dog.bakcTokens[i].tokenId]) {
+    for (let i = 0; i < dog.bakcTokens.length; i++) {
+      if (dogIds[dog.bakcTokens[i].tokenId]) {
         dogsToLoan.push(dog.bakcTokens[i].tokenId);
       }
     }
-    if(dogsToLoan.length == 0) {
-      setFeedback('NOTHING SELECTED');  setTXPending(false); return;
+    if (dogsToLoan.length == 0) {
+      setFeedback("NOTHING SELECTED");
+      setTXPending(false);
+      return;
     }
-    if(rentCostWEI == 0) {
-      setFeedback('COST TO RENT MUST BE > 0');  setTXPending(false); return;
+    if (rentCostWEI == 0) {
+      setFeedback("COST TO RENT MUST BE > 0");
+      setTXPending(false);
+      return;
     }
-    try { 
+    try {
       blockchain.rentmydogContract.methods
         .loanDogs(dogsToLoan, rentCostWEI)
         .send({
@@ -149,38 +156,38 @@ function App() {
         })
         .once("error", (err) => {
           console.log(err);
-            setFeedback("SORRY, SOMETHING WENT WRONG");
-            setTXPending(false);
+          setFeedback("SORRY, SOMETHING WENT WRONG");
+          setTXPending(false);
         })
         .then((receipt) => {
           console.log(receipt);
-            setFeedback(
-              `DOGS LOAN-ABILITY ALLOWED`
-            );
-            setTXPending(false);
-            dispatch(fetchDog(blockchain.account));
-            resetSelections();
+          setFeedback(`DOGS LOAN-ABILITY ALLOWED`);
+          setTXPending(false);
+          dispatch(fetchDog(blockchain.account));
+          resetSelections();
         });
-      } catch (err) {
-        console.log(err);
-            setFeedback("SORRY, SOMETHING WENT WRONG");
-            setTXPending(false);
-      }
+    } catch (err) {
+      console.log(err);
+      setFeedback("SORRY, SOMETHING WENT WRONG");
+      setTXPending(false);
+    }
   };
-  
+
   const unloanDogs = () => {
-    setFeedback('UNLOAN-ING');
+    setFeedback("UNLOAN-ING");
     setTXPending(true);
     let dogsToUnloan = [];
-    for(let i = 0;i < dog.bakcTokens.length;i++) {
-      if(dogIds[dog.bakcTokens[i].tokenId]) {
+    for (let i = 0; i < dog.bakcTokens.length; i++) {
+      if (dogIds[dog.bakcTokens[i].tokenId]) {
         dogsToUnloan.push(dog.bakcTokens[i].tokenId);
       }
     }
-    if(dogsToUnloan.length == 0) {
-      setFeedback('NOTHING SELECTED');  setTXPending(false); return;
+    if (dogsToUnloan.length == 0) {
+      setFeedback("NOTHING SELECTED");
+      setTXPending(false);
+      return;
     }
-    try { 
+    try {
       blockchain.rentmydogContract.methods
         .unloanDogs(dogsToUnloan)
         .send({
@@ -189,90 +196,91 @@ function App() {
         })
         .once("error", (err) => {
           console.log(err);
-            setFeedback("SORRY, SOMETHING WENT WRONG");
-            setTXPending(false);
+          setFeedback("SORRY, SOMETHING WENT WRONG");
+          setTXPending(false);
         })
         .then((receipt) => {
           console.log(receipt);
-            setFeedback(
-              `DOGS LOAN-ABILITY REVOKED`
-            );
-            setTXPending(false);
-            dispatch(fetchDog(blockchain.account));
-            resetSelections();
+          setFeedback(`DOGS LOAN-ABILITY REVOKED`);
+          setTXPending(false);
+          dispatch(fetchDog(blockchain.account));
+          resetSelections();
         });
-      } catch (err) {
-        console.log(err);
-            setFeedback("SORRY, SOMETHING WENT WRONG");
-            setTXPending(false);
-      }
+    } catch (err) {
+      console.log(err);
+      setFeedback("SORRY, SOMETHING WENT WRONG");
+      setTXPending(false);
+    }
   };
 
-  
   const rentDogs = () => {
-    setFeedback('RENT-ING');
+    setFeedback("RENT-ING");
     setTXPending(true);
     let totalCostWEI = 0;
     let rentDogIds = [];
     let myBaycIds = [];
     let myMaycIds = [];
-    for(let i = 0;i < dog.availableDogs.length;i++) {
-      if(dogIds[dog.availableDogs[i].dogId]) {
+    for (let i = 0; i < dog.availableDogs.length; i++) {
+      if (dogIds[dog.availableDogs[i].dogId]) {
         rentDogIds.push(dog.availableDogs[i].dogId);
         totalCostWEI += getCurrentCost(dog.availableDogs[i].dogId);
       }
     }
-    for(let i = 0;i < dog.baycTokens.length;i++) {
-      if(baycIds[dog.baycTokens[i].tokenId]) {
+    for (let i = 0; i < dog.baycTokens.length; i++) {
+      if (baycIds[dog.baycTokens[i].tokenId]) {
         myBaycIds.push(dog.baycTokens[i].tokenId);
       }
     }
-    for(let i = 0;i < dog.maycTokens.length;i++) {
-      if(maycIds[dog.maycTokens[i].tokenId]) {
+    for (let i = 0; i < dog.maycTokens.length; i++) {
+      if (maycIds[dog.maycTokens[i].tokenId]) {
         myMaycIds.push(dog.maycTokens[i].tokenId);
       }
     }
-    if((myBaycIds.length + myMaycIds.length) != rentDogIds.length) {
-      setFeedback('MUST SELECT EQUAL NUMBER OF APES AND DOGS'); setTXPending(false); return;
+    if (myBaycIds.length + myMaycIds.length != rentDogIds.length) {
+      setFeedback("MUST SELECT EQUAL NUMBER OF APES AND DOGS");
+      setTXPending(false);
+      return;
     }
-    if((myBaycIds.length + myMaycIds.length) == 0) {
-      setFeedback('NOTHING SELECTED');  setTXPending(false); return;
+    if (myBaycIds.length + myMaycIds.length == 0) {
+      setFeedback("NOTHING SELECTED");
+      setTXPending(false);
+      return;
     }
-    try { 
+    try {
       blockchain.rentmydogContract.methods
         .rentDogs(myBaycIds, myMaycIds, rentDogIds)
         .send({
           to: CONFIG.RENTMYDOG_CONTRACT_ADDRESS,
           from: blockchain.account,
-          value: totalCostWEI
+          value: totalCostWEI,
         })
         .once("error", (err) => {
           console.log(err);
-            setFeedback("SORRY, SOMETHING WENT WRONG");
-            setTXPending(false);
+          setFeedback("SORRY, SOMETHING WENT WRONG");
+          setTXPending(false);
         })
         .then((receipt) => {
           console.log(receipt);
-            setFeedback(
-              `SEWER PASSES MINTED!`
-            );
-            setTXPending(false);
-            dispatch(fetchDog(blockchain.account));
-            resetSelections();
+          setFeedback(`SEWER PASSES MINTED!`);
+          setTXPending(false);
+          dispatch(fetchDog(blockchain.account));
+          resetSelections();
         });
-      } catch (err) {
-        console.log(err);
-        setFeedback("SORRY, SOMETHING WENT WRONG");
-        setTXPending(false);
-      }
+    } catch (err) {
+      console.log(err);
+      setFeedback("SORRY, SOMETHING WENT WRONG");
+      setTXPending(false);
+    }
   };
 
-  const toggleDogId = (position)=> {
-    const updateTokens = dogIds.map((item, index) => index === position ? !item : item);
-    if(!sellBoostMode) {
+  const toggleDogId = (position) => {
+    const updateTokens = dogIds.map((item, index) =>
+      index === position ? !item : item
+    );
+    if (!sellBoostMode) {
       let totalCostWEI = 0;
-      for(let i = 0;i < dog.availableDogs.length;i++) {
-        if(updateTokens[dog.availableDogs[i].dogId]) {
+      for (let i = 0; i < dog.availableDogs.length; i++) {
+        if (updateTokens[dog.availableDogs[i].dogId]) {
           totalCostWEI += dog.availableDogs[i].rentCost;
         }
       }
@@ -281,34 +289,37 @@ function App() {
     setDogIds(updateTokens);
   };
 
-  const toggleBaycId = (position)=> {
-    const updateTokens = baycIds.map((item, index) => index === position ? !item : item);
+  const toggleBaycId = (position) => {
+    const updateTokens = baycIds.map((item, index) =>
+      index === position ? !item : item
+    );
     setBaycIds(updateTokens);
   };
 
-  const toggleMaycId = (position)=> {
-    const updateTokens = maycIds.map((item, index) => index === position ? !item : item);
+  const toggleMaycId = (position) => {
+    const updateTokens = maycIds.map((item, index) =>
+      index === position ? !item : item
+    );
     setMaycIds(updateTokens);
   };
 
   const resetSelections = () => {
-      setDogIds(new Array(10000).fill(false));
-      setBaycIds(new Array(10000).fill(false));
-      setMaycIds(new Array(40000).fill(false));
-      setTotalCostToRent(0);
-      setCostToRent(0);
-      setFeedback('');
+    setDogIds(new Array(10000).fill(false));
+    setBaycIds(new Array(10000).fill(false));
+    setMaycIds(new Array(40000).fill(false));
+    setTotalCostToRent(0);
+    setCostToRent(0);
+    setFeedback("");
   };
 
   const getCurrentCost = (dogId) => {
-    for(let i = 0;i < dog.availableDogs.length;i++) {
-      if(dog.availableDogs[i].dogId == dogId) {
+    for (let i = 0; i < dog.availableDogs.length; i++) {
+      if (dog.availableDogs[i].dogId == dogId) {
         return dog.availableDogs[i].rentCost;
       }
     }
     return 0;
   };
-
 
   const getDogs = () => {
     if (blockchain.account !== "" && blockchain.helperContract !== null) {
@@ -319,7 +330,7 @@ function App() {
 
   const updateRentCost = (e) => {
     const cost = e.target.value;
-    if(!cost || cost.match(/^\d{1,}(\.\d{0,4})?$/)) {
+    if (!cost || cost.match(/^\d{1,}(\.\d{0,4})?$/)) {
       setCostToRent(cost);
     }
   };
@@ -343,9 +354,7 @@ function App() {
     getDogs();
   }, [blockchain.account]);
 
-  useEffect(() => {
-    
-  }, [sellBoostMode]);
+  useEffect(() => {}, [sellBoostMode]);
 
   return (
     <s.Screen>
@@ -355,14 +364,50 @@ function App() {
         style={{ padding: 24, backgroundColor: "var(--primary)" }}
         image={CONFIG.SHOW_BACKGROUND ? "/config/images/bg.png" : null}
       >
-          <HeaderContainer style={{paddingLeft: 48, paddingRight: 48}}>
+        <HeaderContainer style={{ paddingLeft: 48, paddingRight: 48 }}>
           <LogoContainer>
-                <StyledLogo alt={"logo"} src={"/config/images/logo.png"} />
+            <StyledLogo alt={"logo"} src={"/config/images/logo.png"} />
+            <p>
+              Contracts audited by{" "}
+              <a href="https://twitter.com/0xQuit">@0xQuit</a> of
+              <a href="https://boringsecurity.com">@SECDAO</a>
+            </p>
           </LogoContainer>
           <NavContainer>
-            <NavButton onClick={() => {resetSelections(); setSellBoostMode(false);}} style={{backgroundColor: (!sellBoostMode ? 'var(--nav-button-selected)' : 'var(--nav-button)')}}>RENT DOGS</NavButton>
-            <NavButton onClick={() => {resetSelections(); setSellBoostMode(true);}} style={{backgroundColor: (!sellBoostMode ? 'var(--nav-button)' : 'var(--nav-button-selected)')}}>SELL BOOSTS</NavButton>
-            <NavButton onClick={() => {getDogs();}} style={{backgroundColor: 'var(--nav-button)'}}>REFRESH</NavButton>
+            <NavButton
+              onClick={() => {
+                resetSelections();
+                setSellBoostMode(false);
+              }}
+              style={{
+                backgroundColor: !sellBoostMode
+                  ? "var(--nav-button-selected)"
+                  : "var(--nav-button)",
+              }}
+            >
+              RENT DOGS
+            </NavButton>
+            <NavButton
+              onClick={() => {
+                resetSelections();
+                setSellBoostMode(true);
+              }}
+              style={{
+                backgroundColor: !sellBoostMode
+                  ? "var(--nav-button)"
+                  : "var(--nav-button-selected)",
+              }}
+            >
+              SELL BOOSTS
+            </NavButton>
+            <NavButton
+              onClick={() => {
+                getDogs();
+              }}
+              style={{ backgroundColor: "var(--nav-button)" }}
+            >
+              REFRESH
+            </NavButton>
           </NavContainer>
         </HeaderContainer>
         <ResponsiveWrapper flex={1} style={{ padding: 24 }} test>
@@ -375,224 +420,715 @@ function App() {
               backgroundColor: "var(--accent)",
               padding: 24,
               borderRadius: 24,
-              border: ((false ? '0px' :"4px var(--secondary)")),
-              boxShadow: ((false ? '0px' : "0px 5px 11px 2px rgba(0,0,0,0.7)")),
+              border: false ? "0px" : "4px var(--secondary)",
+              boxShadow: false ? "0px" : "0px 5px 11px 2px rgba(0,0,0,0.7)",
             }}
           >
-                {(blockchain.account === "" ||
-                blockchain.rentmydogContract === null) ? (
-                  <s.Container ai={"center"} jc={"center"}>
+            {blockchain.account === "" ||
+            blockchain.rentmydogContract === null ? (
+              <s.Container ai={"center"} jc={"center"}>
+                <s.TextDescription
+                  style={{
+                    textAlign: "center",
+                    color: "var(--accent-text)",
+                    fontSize: "30px",
+                  }}
+                >
+                  Connect to the {CONFIG.NETWORK.NAME} network
+                </s.TextDescription>
+                <s.SpacerSmall />
+                <StyledButton
+                  onClick={(e) => {
+                    e.preventDefault();
+                    dispatch(connect());
+                    getDogs();
+                  }}
+                >
+                  CONNECT
+                </StyledButton>
+                {blockchain.errorMsg !== "" ? (
+                  <>
+                    <s.SpacerSmall />
                     <s.TextDescription
                       style={{
                         textAlign: "center",
                         color: "var(--accent-text)",
-                        fontSize: "30px"
                       }}
                     >
-                      Connect to the {CONFIG.NETWORK.NAME} network
+                      {blockchain.errorMsg}
                     </s.TextDescription>
-                    <s.SpacerSmall />
-                    <StyledButton
-                      onClick={(e) => {
-                        e.preventDefault();
-                        dispatch(connect());
-                        getDogs();
-                      }}
-                    >
-                      CONNECT
-                    </StyledButton>
-                    {blockchain.errorMsg !== "" ? (
-                      <>
-                        <s.SpacerSmall />
-                        <s.TextDescription
-                          style={{
-                            textAlign: "center",
-                            color: "var(--accent-text)",
-                          }}
-                        >
-                          {blockchain.errorMsg}
-                        </s.TextDescription>
-                      </>
-                    ) : null}
-                  </s.Container>
-                ) : (
-                  <>
+                  </>
+                ) : null}
+              </s.Container>
+            ) : (
+              <>
+                {
                   {
-                    {
-                      true: 
-                        <>
-                          {
-                            dog.loading ? 
-                            <>
-                          <s.Container ai={"center"} jc={"center"} fd={"column"} fw={"wrap"}>
-                            <s.Container ai={"center"} jc={"center"} fd={"row"} fw={"wrap"}>
-                              <s.TextDescription style={{color: "#FFFFFF", fontSize: "30px"}}>LOADING...</s.TextDescription>
-                            </s.Container>
-                          </s.Container>
-                            </> : 
-
-
-                            <>
-                          <s.Container ai={"center"} jc={"center"} fd={"column"} fw={"wrap"}>
-                            {dog.bakcTokens.filter(obj => (!obj.claimed && obj.delegated)).length > 0 ? <>
-                            <s.TextDescription style={{color: "#FFFFFF", fontSize: "40px", textAlign: "center"}}>DOGS WITH BOOST TO SELL</s.TextDescription>
-                            <s.SpacerMedium />
-                            <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"} style={{display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content"}}>
-                                {
-                                  (dog.bakcTokens && dog.bakcTokens.length > 0) ? (
-                                    <>
-                                      { dog.bakcTokens.filter(obj => (!obj.claimed && obj.delegated)).map((obj) => 
-                                        <s.Container ai={"center"} jc={"center"} style={{padding: "10px", margin: "5px", backgroundColor: (dogIds[obj.tokenId] ? "#33AA55FF" : "#FFFFFF00"), borderRadius: "10px"}} onClick={(e) => { toggleDogId(obj.tokenId); }}>
-                                          { getCurrentCost(obj.tokenId) > 0 ? 
-                                            <><s.TextDescription style={{color: "#FFFFFF", fontSize: "20px"}}>COST: {Math.floor(getCurrentCost(obj.tokenId)/10**16)/10**2}E</s.TextDescription></> : 
-                                            <><s.TextDescription style={{color: "#FFFFFF", fontSize: "20px"}}>NOT LISTED</s.TextDescription></>}
-                                          <s.SpacerSmall />
-                                          <StyledButton>
-                                            DOG #{obj.tokenId}
-                                          </StyledButton>
-                                        </s.Container>) }
-                                    </>
-                                    ) : (<></>) 
-                                }
-                            </s.Container>
-                            <s.SpacerMedium />
-                            <s.Container ai={"center"} jc={"center"} fd="column" fw={"wrap"} style={{display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content"}}>
-                              <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"} style={{display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content"}}>
-                                <s.TextDescription style={{color: "#FFFFFF", fontSize: "20px"}}>RENT COST: </s.TextDescription>
-                                <s.SpacerSmall />
-                                <input defaultValue={"0"} value={costToRent} type="text" style={{width: "150px", height: "30px", fontSize: "25px", textAlign: "center"}} onChange={(e) => { updateRentCost(e);}} />
-                              </s.Container>
-                              <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"} style={{display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content"}}>
-                                <StyledButton disabled={txPending} onClick={(e) => {e.preventDefault(); loanDogs();}}>
-                                  { txPending ? 'BUSY' : 'LIST BOOSTS' }
-                                </StyledButton>
-                                <s.SpacerSmall />
-                                <StyledButton disabled={txPending} onClick={(e) => {e.preventDefault(); unloanDogs();}}>
-                                  { txPending ? 'BUSY' : 'DELIST BOOSTS' }
-                                </StyledButton>
-                              </s.Container>
-                              <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"} style={{display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content"}}>
-                                <s.TextDescription style={{color: "#FFFFFF", fontSize: "30px"}}>{feedback}</s.TextDescription>
+                    true: (
+                      <>
+                        {dog.loading ? (
+                          <>
+                            <s.Container
+                              ai={"center"}
+                              jc={"center"}
+                              fd={"column"}
+                              fw={"wrap"}
+                            >
+                              <s.Container
+                                ai={"center"}
+                                jc={"center"}
+                                fd={"row"}
+                                fw={"wrap"}
+                              >
+                                <s.TextDescription
+                                  style={{ color: "#FFFFFF", fontSize: "30px" }}
+                                >
+                                  LOADING...
+                                </s.TextDescription>
                               </s.Container>
                             </s.Container>
-                            </> : <><s.TextDescription style={{color: "#FFFFFF", fontSize: "40px"}}>NO DOG BOOSTS TO SELL</s.TextDescription></> }
+                          </>
+                        ) : (
+                          <>
+                            <s.Container
+                              ai={"center"}
+                              jc={"center"}
+                              fd={"column"}
+                              fw={"wrap"}
+                            >
+                              {dog.bakcTokens.filter(
+                                (obj) => !obj.claimed && obj.delegated
+                              ).length > 0 ? (
+                                <>
+                                  <s.TextDescription
+                                    style={{
+                                      color: "#FFFFFF",
+                                      fontSize: "40px",
+                                      textAlign: "center",
+                                    }}
+                                  >
+                                    DOGS WITH BOOST TO SELL
+                                  </s.TextDescription>
+                                  <s.SpacerMedium />
+                                  <s.Container
+                                    ai={"center"}
+                                    jc={"center"}
+                                    fd="row"
+                                    fw={"wrap"}
+                                    style={{
+                                      display: "flex",
+                                      backgroundColor: "#111111",
+                                      padding: "10px",
+                                      width: "fit-content",
+                                    }}
+                                  >
+                                    {dog.bakcTokens &&
+                                    dog.bakcTokens.length > 0 ? (
+                                      <>
+                                        {dog.bakcTokens
+                                          .filter(
+                                            (obj) =>
+                                              !obj.claimed && obj.delegated
+                                          )
+                                          .map((obj) => (
+                                            <s.Container
+                                              ai={"center"}
+                                              jc={"center"}
+                                              style={{
+                                                padding: "10px",
+                                                margin: "5px",
+                                                backgroundColor: dogIds[
+                                                  obj.tokenId
+                                                ]
+                                                  ? "#33AA55FF"
+                                                  : "#FFFFFF00",
+                                                borderRadius: "10px",
+                                              }}
+                                              onClick={(e) => {
+                                                toggleDogId(obj.tokenId);
+                                              }}
+                                            >
+                                              {getCurrentCost(obj.tokenId) >
+                                              0 ? (
+                                                <>
+                                                  <s.TextDescription
+                                                    style={{
+                                                      color: "#FFFFFF",
+                                                      fontSize: "20px",
+                                                    }}
+                                                  >
+                                                    COST:{" "}
+                                                    {Math.floor(
+                                                      getCurrentCost(
+                                                        obj.tokenId
+                                                      ) /
+                                                        10 ** 16
+                                                    ) /
+                                                      10 ** 2}
+                                                    E
+                                                  </s.TextDescription>
+                                                </>
+                                              ) : (
+                                                <>
+                                                  <s.TextDescription
+                                                    style={{
+                                                      color: "#FFFFFF",
+                                                      fontSize: "20px",
+                                                    }}
+                                                  >
+                                                    NOT LISTED
+                                                  </s.TextDescription>
+                                                </>
+                                              )}
+                                              <s.SpacerSmall />
+                                              <StyledButton>
+                                                DOG #{obj.tokenId}
+                                              </StyledButton>
+                                            </s.Container>
+                                          ))}
+                                      </>
+                                    ) : (
+                                      <></>
+                                    )}
+                                  </s.Container>
+                                  <s.SpacerMedium />
+                                  <s.Container
+                                    ai={"center"}
+                                    jc={"center"}
+                                    fd="column"
+                                    fw={"wrap"}
+                                    style={{
+                                      display: "flex",
+                                      backgroundColor: "#111111",
+                                      padding: "10px",
+                                      width: "fit-content",
+                                    }}
+                                  >
+                                    <s.Container
+                                      ai={"center"}
+                                      jc={"center"}
+                                      fd="row"
+                                      fw={"wrap"}
+                                      style={{
+                                        display: "flex",
+                                        backgroundColor: "#111111",
+                                        padding: "10px",
+                                        width: "fit-content",
+                                      }}
+                                    >
+                                      <s.TextDescription
+                                        style={{
+                                          color: "#FFFFFF",
+                                          fontSize: "20px",
+                                        }}
+                                      >
+                                        RENT COST:{" "}
+                                      </s.TextDescription>
+                                      <s.SpacerSmall />
+                                      <input
+                                        defaultValue={"0"}
+                                        value={costToRent}
+                                        type="text"
+                                        style={{
+                                          width: "150px",
+                                          height: "30px",
+                                          fontSize: "25px",
+                                          textAlign: "center",
+                                        }}
+                                        onChange={(e) => {
+                                          updateRentCost(e);
+                                        }}
+                                      />
+                                    </s.Container>
+                                    <s.Container
+                                      ai={"center"}
+                                      jc={"center"}
+                                      fd="row"
+                                      fw={"wrap"}
+                                      style={{
+                                        display: "flex",
+                                        backgroundColor: "#111111",
+                                        padding: "10px",
+                                        width: "fit-content",
+                                      }}
+                                    >
+                                      <StyledButton
+                                        disabled={txPending}
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          loanDogs();
+                                        }}
+                                      >
+                                        {txPending ? "BUSY" : "LIST BOOSTS"}
+                                      </StyledButton>
+                                      <s.SpacerSmall />
+                                      <StyledButton
+                                        disabled={txPending}
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          unloanDogs();
+                                        }}
+                                      >
+                                        {txPending ? "BUSY" : "DELIST BOOSTS"}
+                                      </StyledButton>
+                                    </s.Container>
+                                    <s.Container
+                                      ai={"center"}
+                                      jc={"center"}
+                                      fd="row"
+                                      fw={"wrap"}
+                                      style={{
+                                        display: "flex",
+                                        backgroundColor: "#111111",
+                                        padding: "10px",
+                                        width: "fit-content",
+                                      }}
+                                    >
+                                      <s.TextDescription
+                                        style={{
+                                          color: "#FFFFFF",
+                                          fontSize: "30px",
+                                        }}
+                                      >
+                                        {feedback}
+                                      </s.TextDescription>
+                                    </s.Container>
+                                  </s.Container>
+                                </>
+                              ) : (
+                                <>
+                                  <s.TextDescription
+                                    style={{
+                                      color: "#FFFFFF",
+                                      fontSize: "40px",
+                                    }}
+                                  >
+                                    NO DOG BOOSTS TO SELL
+                                  </s.TextDescription>
+                                </>
+                              )}
 
-                            {dog.bakcTokens.filter(obj => (!obj.claimed && !obj.delegated)).length > 0 ? <>
-                            <s.SpacerLarge />
-                            <s.TextDescription style={{color: "#FFFFFF", fontSize: "40px", textAlign: "center"}}>YOUR DOGS NEED TO BE DELEGATED</s.TextDescription>
-                            <s.SpacerSmall />
-                            <s.TextDescription style={{color: "#FFFFFF", fontSize: "20px", textAlign: "center"}}>TO SELL DOGS BOOSTS, USE DELEGATE.CASH TO DELEGATE FROM YOUR DOG WALLET TO THE RENTMYDOG CONTRACT</s.TextDescription>
-                            <s.TextDescription style={{color: "#FFFFFF", fontSize: "20px", textAlign: "center"}}>RENTMYDOG ADDRESS: {CONFIG.RENTMYDOG_CONTRACT_ADDRESS}</s.TextDescription>
-                            </> : null }
-                          </s.Container>
-                            </>
-                          }
-                        </>,
-                      false: 
-                        <>
-                          {
-                            dog.loading ? 
-                            <>
-                          <s.Container ai={"center"} jc={"center"} fd={"column"} fw={"wrap"}>
-                            <s.Container ai={"center"} jc={"center"} fd={"row"} fw={"wrap"}>
-                              <s.TextDescription style={{color: "#FFFFFF", fontSize: "30px"}}>LOADING...</s.TextDescription>
+                              {dog.bakcTokens.filter(
+                                (obj) => !obj.claimed && !obj.delegated
+                              ).length > 0 ? (
+                                <>
+                                  <s.SpacerLarge />
+                                  <s.TextDescription
+                                    style={{
+                                      color: "#FFFFFF",
+                                      fontSize: "40px",
+                                      textAlign: "center",
+                                    }}
+                                  >
+                                    YOUR DOGS NEED TO BE DELEGATED
+                                  </s.TextDescription>
+                                  <s.SpacerSmall />
+                                  <s.TextDescription
+                                    style={{
+                                      color: "#FFFFFF",
+                                      fontSize: "20px",
+                                      textAlign: "center",
+                                    }}
+                                  >
+                                    TO SELL DOGS BOOSTS, USE DELEGATE.CASH TO
+                                    DELEGATE FROM YOUR DOG WALLET TO THE
+                                    RENTMYDOG CONTRACT
+                                  </s.TextDescription>
+                                  <s.TextDescription
+                                    style={{
+                                      color: "#FFFFFF",
+                                      fontSize: "20px",
+                                      textAlign: "center",
+                                    }}
+                                  >
+                                    RENTMYDOG ADDRESS:{" "}
+                                    {CONFIG.RENTMYDOG_CONTRACT_ADDRESS}
+                                  </s.TextDescription>
+                                </>
+                              ) : null}
                             </s.Container>
-                          </s.Container>
-                            </> : 
-
-
-                            <>
-                          <s.Container ai={"center"} jc={"center"} fd={"column"} fw={"wrap"}>
-
-                            {dog.baycTokens.filter(obj => (!obj.claimed && obj.delegated)).length > 0 ? <>
-                            <s.TextDescription style={{color: "#FFFFFF", fontSize: "40px", textAlign: "center"}}>BAYC TO CLAIM WITH BOOST</s.TextDescription>
-                            <s.SpacerMedium />
-                            <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"} style={{display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content"}}>
-                                {
-                                  (dog.baycTokens && dog.baycTokens.length > 0) ? (
-                                    <>
-                                      { dog.baycTokens.filter(obj => (!obj.claimed && obj.delegated)).map((obj) => 
-                                        <s.Container ai={"center"} jc={"center"} style={{padding: "10px", margin: "5px", backgroundColor: (baycIds[obj.tokenId] ? "#33AA55FF" : "#FFFFFF00"), borderRadius: "10px"}} onClick={(e) => { toggleBaycId(obj.tokenId); }}>
-                                          <StyledButton>
-                                            BAYC #{obj.tokenId}
-                                          </StyledButton>
-                                        </s.Container>) }
-                                    </>
-                                    ) : (<></>) 
-                                }
+                          </>
+                        )}
+                      </>
+                    ),
+                    false: (
+                      <>
+                        {dog.loading ? (
+                          <>
+                            <s.Container
+                              ai={"center"}
+                              jc={"center"}
+                              fd={"column"}
+                              fw={"wrap"}
+                            >
+                              <s.Container
+                                ai={"center"}
+                                jc={"center"}
+                                fd={"row"}
+                                fw={"wrap"}
+                              >
+                                <s.TextDescription
+                                  style={{ color: "#FFFFFF", fontSize: "30px" }}
+                                >
+                                  LOADING...
+                                </s.TextDescription>
+                              </s.Container>
                             </s.Container>
-                            <s.SpacerMedium />
-                            </> : null }
+                          </>
+                        ) : (
+                          <>
+                            <s.Container
+                              ai={"center"}
+                              jc={"center"}
+                              fd={"column"}
+                              fw={"wrap"}
+                            >
+                              {dog.baycTokens.filter(
+                                (obj) => !obj.claimed && obj.delegated
+                              ).length > 0 ? (
+                                <>
+                                  <s.TextDescription
+                                    style={{
+                                      color: "#FFFFFF",
+                                      fontSize: "40px",
+                                      textAlign: "center",
+                                    }}
+                                  >
+                                    BAYC TO CLAIM WITH BOOST
+                                  </s.TextDescription>
+                                  <s.SpacerMedium />
+                                  <s.Container
+                                    ai={"center"}
+                                    jc={"center"}
+                                    fd="row"
+                                    fw={"wrap"}
+                                    style={{
+                                      display: "flex",
+                                      backgroundColor: "#111111",
+                                      padding: "10px",
+                                      width: "fit-content",
+                                    }}
+                                  >
+                                    {dog.baycTokens &&
+                                    dog.baycTokens.length > 0 ? (
+                                      <>
+                                        {dog.baycTokens
+                                          .filter(
+                                            (obj) =>
+                                              !obj.claimed && obj.delegated
+                                          )
+                                          .map((obj) => (
+                                            <s.Container
+                                              ai={"center"}
+                                              jc={"center"}
+                                              style={{
+                                                padding: "10px",
+                                                margin: "5px",
+                                                backgroundColor: baycIds[
+                                                  obj.tokenId
+                                                ]
+                                                  ? "#33AA55FF"
+                                                  : "#FFFFFF00",
+                                                borderRadius: "10px",
+                                              }}
+                                              onClick={(e) => {
+                                                toggleBaycId(obj.tokenId);
+                                              }}
+                                            >
+                                              <StyledButton>
+                                                BAYC #{obj.tokenId}
+                                              </StyledButton>
+                                            </s.Container>
+                                          ))}
+                                      </>
+                                    ) : (
+                                      <></>
+                                    )}
+                                  </s.Container>
+                                  <s.SpacerMedium />
+                                </>
+                              ) : null}
 
-                            {dog.maycTokens.filter(obj => (!obj.claimed && obj.delegated)).length > 0 ? <>
-                            <s.TextDescription style={{color: "#FFFFFF", fontSize: "40px", textAlign: "center"}}>MAYC TO CLAIM WITH BOOST</s.TextDescription>
-                            <s.SpacerMedium />
-                            <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"} style={{display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content"}}>
-                                {
-                                  (dog.maycTokens && dog.maycTokens.length > 0) ? (
-                                    <>
-                                      { dog.maycTokens.filter(obj => (!obj.claimed && obj.delegated)).map((obj) => 
-                                        <s.Container ai={"center"} jc={"center"} style={{padding: "10px", margin: "5px", backgroundColor: (maycIds[obj.tokenId] ? "#33AA55FF" : "#FFFFFF00"), borderRadius: "10px"}} onClick={(e) => { toggleMaycId(obj.tokenId); }}>
-                                          <StyledButton>
-                                            MAYC #{obj.tokenId}
-                                          </StyledButton>
-                                        </s.Container>) }
-                                    </>
-                                    ) : (<></>) 
-                                }
-                            </s.Container>
-                            <s.SpacerMedium />
-                            </> : null }
+                              {dog.maycTokens.filter(
+                                (obj) => !obj.claimed && obj.delegated
+                              ).length > 0 ? (
+                                <>
+                                  <s.TextDescription
+                                    style={{
+                                      color: "#FFFFFF",
+                                      fontSize: "40px",
+                                      textAlign: "center",
+                                    }}
+                                  >
+                                    MAYC TO CLAIM WITH BOOST
+                                  </s.TextDescription>
+                                  <s.SpacerMedium />
+                                  <s.Container
+                                    ai={"center"}
+                                    jc={"center"}
+                                    fd="row"
+                                    fw={"wrap"}
+                                    style={{
+                                      display: "flex",
+                                      backgroundColor: "#111111",
+                                      padding: "10px",
+                                      width: "fit-content",
+                                    }}
+                                  >
+                                    {dog.maycTokens &&
+                                    dog.maycTokens.length > 0 ? (
+                                      <>
+                                        {dog.maycTokens
+                                          .filter(
+                                            (obj) =>
+                                              !obj.claimed && obj.delegated
+                                          )
+                                          .map((obj) => (
+                                            <s.Container
+                                              ai={"center"}
+                                              jc={"center"}
+                                              style={{
+                                                padding: "10px",
+                                                margin: "5px",
+                                                backgroundColor: maycIds[
+                                                  obj.tokenId
+                                                ]
+                                                  ? "#33AA55FF"
+                                                  : "#FFFFFF00",
+                                                borderRadius: "10px",
+                                              }}
+                                              onClick={(e) => {
+                                                toggleMaycId(obj.tokenId);
+                                              }}
+                                            >
+                                              <StyledButton>
+                                                MAYC #{obj.tokenId}
+                                              </StyledButton>
+                                            </s.Container>
+                                          ))}
+                                      </>
+                                    ) : (
+                                      <></>
+                                    )}
+                                  </s.Container>
+                                  <s.SpacerMedium />
+                                </>
+                              ) : null}
 
-                            <s.TextDescription style={{color: "#FFFFFF", fontSize: "40px", textAlign: "center"}}>DOG BOOSTS FOR SALE</s.TextDescription>
-                            <s.SpacerMedium />
-                            <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"} style={{display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content"}}>
-                                {
-                                  (dog.availableDogs && dog.availableDogs.length > 0) ? (
-                                    <>
-                                      { dog.availableDogs.sort((a, b) => {if(parseInt(a.rentCost) > parseInt(b.rentCost)) { return 1;} if(parseInt(a.rentCost) < parseInt(b.rentCost)) { return -1;} return 0;}).map((obj) => 
-                                        <s.Container ai={"center"} jc={"center"} style={{padding: "10px", margin: "5px", backgroundColor: (dogIds[obj.dogId] ? "#33AA55FF" : "#FFFFFF00"), borderRadius: "10px"}} onClick={(e) => { toggleDogId(obj.dogId); }}>
-                                          <s.TextDescription style={{color: "#FFFFFF", fontSize: "20px"}}>COST: {Math.floor(getCurrentCost(obj.dogId)/10**16)/10**2}E</s.TextDescription>
+                              <s.TextDescription
+                                style={{
+                                  color: "#FFFFFF",
+                                  fontSize: "40px",
+                                  textAlign: "center",
+                                }}
+                              >
+                                DOG BOOSTS FOR SALE
+                              </s.TextDescription>
+                              <s.SpacerMedium />
+                              <s.Container
+                                ai={"center"}
+                                jc={"center"}
+                                fd="row"
+                                fw={"wrap"}
+                                style={{
+                                  display: "flex",
+                                  backgroundColor: "#111111",
+                                  padding: "10px",
+                                  width: "fit-content",
+                                }}
+                              >
+                                {dog.availableDogs &&
+                                dog.availableDogs.length > 0 ? (
+                                  <>
+                                    {dog.availableDogs
+                                      .sort((a, b) => {
+                                        if (
+                                          parseInt(a.rentCost) >
+                                          parseInt(b.rentCost)
+                                        ) {
+                                          return 1;
+                                        }
+                                        if (
+                                          parseInt(a.rentCost) <
+                                          parseInt(b.rentCost)
+                                        ) {
+                                          return -1;
+                                        }
+                                        return 0;
+                                      })
+                                      .map((obj) => (
+                                        <s.Container
+                                          ai={"center"}
+                                          jc={"center"}
+                                          style={{
+                                            padding: "10px",
+                                            margin: "5px",
+                                            backgroundColor: dogIds[obj.dogId]
+                                              ? "#33AA55FF"
+                                              : "#FFFFFF00",
+                                            borderRadius: "10px",
+                                          }}
+                                          onClick={(e) => {
+                                            toggleDogId(obj.dogId);
+                                          }}
+                                        >
+                                          <s.TextDescription
+                                            style={{
+                                              color: "#FFFFFF",
+                                              fontSize: "20px",
+                                            }}
+                                          >
+                                            COST:{" "}
+                                            {Math.floor(
+                                              getCurrentCost(obj.dogId) /
+                                                10 ** 16
+                                            ) /
+                                              10 ** 2}
+                                            E
+                                          </s.TextDescription>
                                           <s.SpacerSmall />
                                           <StyledButton>
                                             DOG #{obj.dogId}
                                           </StyledButton>
-                                        </s.Container>) }
-                                    </>
-                                    ) : (<><s.TextDescription style={{color: "#FFFFFF", fontSize: "30px", textAlign: "center"}}>NO DOGS AVAILABLE</s.TextDescription></>) 
-                                }
+                                        </s.Container>
+                                      ))}
+                                  </>
+                                ) : (
+                                  <>
+                                    <s.TextDescription
+                                      style={{
+                                        color: "#FFFFFF",
+                                        fontSize: "30px",
+                                        textAlign: "center",
+                                      }}
+                                    >
+                                      NO DOGS AVAILABLE
+                                    </s.TextDescription>
+                                  </>
+                                )}
+                              </s.Container>
+                              <s.SpacerMedium />
+                              <s.Container
+                                ai={"center"}
+                                jc={"center"}
+                                fd="column"
+                                fw={"wrap"}
+                                style={{
+                                  display: "flex",
+                                  backgroundColor: "#111111",
+                                  padding: "10px",
+                                  width: "fit-content",
+                                }}
+                              >
+                                <s.Container
+                                  ai={"center"}
+                                  jc={"center"}
+                                  fd="row"
+                                  fw={"wrap"}
+                                  style={{
+                                    display: "flex",
+                                    backgroundColor: "#111111",
+                                    padding: "10px",
+                                    width: "fit-content",
+                                  }}
+                                >
+                                  <s.TextDescription
+                                    style={{
+                                      color: "#FFFFFF",
+                                      fontSize: "20px",
+                                    }}
+                                  >
+                                    RENT COST:{" "}
+                                    {Math.floor(totalCostToRent / 10 ** 16) /
+                                      10 ** 2}
+                                  </s.TextDescription>
+                                </s.Container>
+                                <s.Container
+                                  ai={"center"}
+                                  jc={"center"}
+                                  fd="row"
+                                  fw={"wrap"}
+                                  style={{
+                                    display: "flex",
+                                    backgroundColor: "#111111",
+                                    padding: "10px",
+                                    width: "fit-content",
+                                  }}
+                                >
+                                  <StyledButton
+                                    disabled={txPending}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      rentDogs();
+                                    }}
+                                  >
+                                    {txPending ? "BUSY" : "RENTW & MINT"}
+                                  </StyledButton>
+                                </s.Container>
+                                <s.Container
+                                  ai={"center"}
+                                  jc={"center"}
+                                  fd="row"
+                                  fw={"wrap"}
+                                  style={{
+                                    display: "flex",
+                                    backgroundColor: "#111111",
+                                    padding: "10px",
+                                    width: "fit-content",
+                                  }}
+                                >
+                                  <s.TextDescription
+                                    style={{
+                                      color: "#FFFFFF",
+                                      fontSize: "30px",
+                                    }}
+                                  >
+                                    {feedback}
+                                  </s.TextDescription>
+                                </s.Container>
+                              </s.Container>
+
+                              {dog.baycTokens.filter(
+                                (obj) => !obj.claimed && !obj.delegated
+                              ).length > 0 ||
+                              dog.maycTokens.filter(
+                                (obj) => !obj.claimed && !obj.delegated
+                              ).length > 0 ? (
+                                <>
+                                  <s.TextDescription
+                                    style={{
+                                      color: "#FFFFFF",
+                                      fontSize: "40px",
+                                      textAlign: "center",
+                                    }}
+                                  >
+                                    YOU HAVE APES THAT ARE NOT DELEGATED
+                                  </s.TextDescription>
+                                  <s.SpacerMedium />
+                                  <s.TextDescription
+                                    style={{
+                                      color: "#FFFFFF",
+                                      fontSize: "20px",
+                                      textAlign: "center",
+                                    }}
+                                  >
+                                    TO USE RENTMYDOG FOR SEWER PASS BOOSTS, USE
+                                    DELEGATE.CASH TO DELEGATE CLAIMS TO THE
+                                    RENTMYDOG CONTRACT ADDRESS{" "}
+                                    {CONFIG.RENTMYDOG_CONTRACT_ADDRESS}
+                                  </s.TextDescription>
+                                  <s.SpacerMedium />
+                                </>
+                              ) : null}
                             </s.Container>
-                            <s.SpacerMedium />
-                            <s.Container ai={"center"} jc={"center"} fd="column" fw={"wrap"} style={{display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content"}}>
-                              <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"} style={{display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content"}}>
-                                <s.TextDescription style={{color: "#FFFFFF", fontSize: "20px"}}>RENT COST: {Math.floor(totalCostToRent/10**16)/10**2}</s.TextDescription>
-                              </s.Container>
-                              <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"} style={{display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content"}}>
-                                <StyledButton disabled={txPending} onClick={(e) => {e.preventDefault(); rentDogs();}}>
-                                  { txPending ? 'BUSY' : 'RENTW & MINT' }
-                                </StyledButton>
-                              </s.Container>
-                              <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"} style={{display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content"}}>
-                                <s.TextDescription style={{color: "#FFFFFF", fontSize: "30px"}}>{feedback}</s.TextDescription>
-                              </s.Container>
-                            </s.Container>
-                            
-                            {dog.baycTokens.filter(obj => (!obj.claimed && !obj.delegated)).length > 0 || dog.maycTokens.filter(obj => (!obj.claimed && !obj.delegated)).length > 0 ?
-                              <>
-                                <s.TextDescription style={{color: "#FFFFFF", fontSize: "40px", textAlign: "center"}}>YOU HAVE APES THAT ARE NOT DELEGATED</s.TextDescription>
-                                <s.SpacerMedium />
-                                <s.TextDescription style={{color: "#FFFFFF", fontSize: "20px", textAlign: "center"}}>TO USE RENTMYDOG FOR SEWER PASS BOOSTS, USE DELEGATE.CASH TO DELEGATE CLAIMS TO THE RENTMYDOG CONTRACT ADDRESS {CONFIG.RENTMYDOG_CONTRACT_ADDRESS}</s.TextDescription>
-                                <s.SpacerMedium />
-                              </> : null}
-                            
-                          </s.Container>
-                            </>
-                          }
-                        </>,
-                    }[sellBoostMode]
-                  }
-                  </>
-                )}
+                          </>
+                        )}
+                      </>
+                    ),
+                  }[sellBoostMode]
+                }
+              </>
+            )}
             <s.SpacerMedium />
           </s.Container>
           <s.SpacerLarge />
