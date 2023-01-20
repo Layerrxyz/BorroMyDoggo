@@ -2,29 +2,29 @@
 import store from "../store";
 
 
-const fetchDoggoRequest = () => {
+const fetchDogRequest = () => {
   return {
-    type: "CHECK_DOGGO_REQUEST",
+    type: "CHECK_DOG_REQUEST",
   };
 };
 
-const fetchDoggoSuccess = (payload) => {
+const fetchDogSuccess = (payload) => {
   return {
-    type: "CHECK_DOGGO_SUCCESS",
+    type: "CHECK_DOG_SUCCESS",
     payload: payload,
   };
 };
 
-const fetchDoggoFailed = (payload) => {
+const fetchDogFailed = (payload) => {
   return {
-    type: "CHECK_DOGGO_FAILED",
+    type: "CHECK_DOG_FAILED",
     payload: payload,
   };
 };
 
-export const fetchDoggo = (blockchainAccount) => {
+export const fetchDog = (blockchainAccount) => {
   return async (dispatch) => {
-    dispatch(fetchDoggoRequest());
+    dispatch(fetchDogRequest());
 
     try {
       let baycTokens = await store
@@ -39,22 +39,22 @@ export const fetchDoggo = (blockchainAccount) => {
         .getState()
         .blockchain.helperContract.methods.bakcTokens(blockchainAccount)
         .call();
-      let availableDoggos = await store
+      let availableDogs = await store
         .getState()
-        .blockchain.borromydoggoContract.methods.availableDoggos()
+        .blockchain.borromydogContract.methods.availableDogs()
         .call();
 
       dispatch(
-        fetchDoggoSuccess({
+        fetchDogSuccess({
           baycTokens,
           maycTokens,
           bakcTokens,
-          availableDoggos,
+          availableDogs,
         })
       );
     } catch (err) {
       console.log(err);
-      dispatch(fetchDoggoFailed("Could not load data from contract."));
+      dispatch(fetchDogFailed("Could not load data from contract."));
     }
   };
 };

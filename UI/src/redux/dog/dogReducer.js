@@ -3,33 +3,33 @@ const initialState = {
   baycTokens: [],
   maycTokens: [],
   bakcTokens: [],
-  availableDoggos: [],
+  availableDogs: [],
   error: false,
   errorMsg: "",
 };
 
 
-const doggoReducer = (state = initialState, action) => {
+const dogReducer = (state = initialState, action) => {
   switch (action.type) {
-    case "CHECK_DOGGO_REQUEST":
+    case "CHECK_DOG_REQUEST":
       return {
         ...state,
         loading: true,
         error: false,
         errorMsg: "",
       };
-    case "CHECK_DOGGO_SUCCESS":
+    case "CHECK_DOG_SUCCESS":
       return {
         ...state,
         loading: false,
         baycTokens: action.payload.baycTokens,
         maycTokens: action.payload.maycTokens,
         bakcTokens: action.payload.bakcTokens,
-        availableDoggos: action.payload.availableDoggos,
+        availableDogs: action.payload.availableDogs,
         error: false,
         errorMsg: "",
       };
-    case "CHECK_DOGGO_FAILED":
+    case "CHECK_DOG_FAILED":
       return {
         ...initialState,
         loading: false,
@@ -41,4 +41,4 @@ const doggoReducer = (state = initialState, action) => {
   }
 };
 
-export default doggoReducer;
+export default dogReducer;

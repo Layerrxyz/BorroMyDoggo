@@ -6,7 +6,7 @@ import Web3 from "web3";
 import Web3Modal from "web3modal";
 
 // log
-import { fetchDoggo } from "../doggo/doggoActions";
+import { fetchDog } from "../dog/dogActions";
 
 const providerOptions = {
   walletconnect: {
@@ -21,7 +21,7 @@ const providerOptions = {
   walletlink: {
     package: WalletLink, // Required
     options: {
-      appName: "BorroMyDoggo", // Required
+      appName: "BorroMyDog", // Required
       infuraId: "<<INFURA_ID>>", // Required unless you provide a JSON RPC url; see `rpc` below
       rpc: "https://mainnet.infura.io/v3/<<INFURA_ID>>", // Optional if `infuraId` is provided; otherwise it's required
       chainId: 1, // Optional. It defaults to 1 if not provided
@@ -67,7 +67,7 @@ const updateAccountRequest = (payload) => {
 export const connect = () => {
   return async (dispatch) => {
     dispatch(connectRequest());
-    const borromydoggo_abiResponse = await fetch("/config/borromydoggo_abi.json", {
+    const borromydog_abiResponse = await fetch("/config/borromydog_abi.json", {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -79,7 +79,7 @@ export const connect = () => {
         Accept: "application/json",
       },
     });
-    const borromydoggo_abi = await borromydoggo_abiResponse.json();
+    const borromydog_abi = await borromydog_abiResponse.json();
     const helper_abi = await helper_abiResponse.json();
     const configResponse = await fetch("/config/config.json", {
       headers: {
@@ -98,9 +98,9 @@ export const connect = () => {
         const accounts = await web3.eth.getAccounts();
         const networkId = await web3.eth.net.getId();
         if (networkId == CONFIG.NETWORK.ID) {
-          const borromydoggo_SmartContractObj = new Web3EthContract(
-            borromydoggo_abi,
-            CONFIG.BORROMYDOGGO_CONTRACT_ADDRESS
+          const borromydog_SmartContractObj = new Web3EthContract(
+            borromydog_abi,
+            CONFIG.BORROMYDOG_CONTRACT_ADDRESS
           );
           const helper_SmartContractObj = new Web3EthContract(
             helper_abi,
@@ -109,7 +109,7 @@ export const connect = () => {
           dispatch(
             connectSuccess({
               account: accounts[0],
-              borromydoggoContract: borromydoggo_SmartContractObj,
+              borromydogContract: borromydog_SmartContractObj,
               helperContract: helper_SmartContractObj,
               web3: web3,
             })
@@ -134,6 +134,6 @@ export const connect = () => {
 export const updateAccount = (account) => {
   return async (dispatch) => {
     dispatch(updateAccountRequest({ account: account }));
-    dispatch(fetchDoggo(account));
+    dispatch(fetchDog(account));
   };
 };

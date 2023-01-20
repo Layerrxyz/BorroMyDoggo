@@ -1,11 +1,11 @@
 import { applyMiddleware, compose, createStore, combineReducers } from "redux";
 import thunk from "redux-thunk";
 import blockchainReducer from "./blockchain/blockchainReducer";
-import doggoReducer from "./doggo/doggoReducer";
+import dogReducer from "./dog/dogReducer";
 
 const rootReducer = combineReducers({
   blockchain: blockchainReducer,
-  doggo: doggoReducer,
+  dog: dogReducer,
 });
 
 const middleware = [thunk];

@@ -1,7 +1,7 @@
 {
-  "name": "BorroMyDoggo",
+  "name": "LayerrDogs",
   "version": "1.0.0",
-  "description": "Sell your doggo's bost, not your doggo.",
+  "description": "Sell your dog's boost, not your dog.",
   "private": true,
   "dependencies": {
     "@walletconnect/web3-provider": "^1.7.4",
