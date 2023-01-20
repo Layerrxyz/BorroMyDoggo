@@ -1,0 +1,12 @@
+:root {
+  --primary: #111111;
+  --primary-text: #ffffff;
+  --secondary: #222222;
+  --selected-page: #3b3a37;
+  --secondary-text: #ffffff;
+  --accent: #000000;
+  --accent-text: #ffffff;
+  --nav-button: #3b3a37;
+  --nav-button-selected: #2e2e1c;
+  --nav-button-text: #FFFFFF;
+}
