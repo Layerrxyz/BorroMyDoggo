@@ -100,7 +100,7 @@ export const connect = () => {
         if (networkId == CONFIG.NETWORK.ID) {
           const rentmydog_SmartContractObj = new Web3EthContract(
             rentmydog_abi,
-            CONFIG.RENTMYDOG_CONTRACT_ADDRESS
+            CONFIG.RENTADOG_CONTRACT_ADDRESS
           );
           const helper_SmartContractObj = new Web3EthContract(
             helper_abi,
