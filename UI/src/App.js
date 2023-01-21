@@ -1188,10 +1188,12 @@ function App() {
             )}
             <s.SpacerMedium />
           </s.Container>
+          <s.Container>
+            <div id="w-s2-footer-text">
+              Layerr Inc. © 2023 All Rights Reserved
+            </div>
+          </s.Container>
           <s.SpacerLarge />
-          <div id="w-s2-footer-text">
-            Layerr Inc. © 2023 All Rights Reserved
-          </div>
         </ResponsiveWrapper>
         <s.SpacerMedium />
       </s.Container>
