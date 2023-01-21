@@ -53,10 +53,15 @@ export const Container = styled.div`
 
 export const TextTitle = styled.p`
   color: var(--primary-text);
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 500;
   line-height: 1.6;
   text-align: center;
+  margin-bottom: 8px;
+  a {
+    color: #1DA1F2;
+    text-decoration: none;
+  }
 `;
 
 export const TextSubTitle = styled.p`

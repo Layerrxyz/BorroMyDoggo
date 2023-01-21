@@ -456,8 +456,8 @@ function App() {
           <LogoContainer>
             <s.TextTitle>
               Contracts audited by
-              <a href="https://twitter.com/0xQuit">@0xQuit</a> of
-              <a href="https://boringsecurity.com">@BoringSecDAO</a>
+              <a href="https://twitter.com/0xQuit"> @0xQuit</a> of 
+              <a href="https://boringsecurity.com"> @BoringSecDAO</a>
             </s.TextTitle>
           </LogoContainer>
 
