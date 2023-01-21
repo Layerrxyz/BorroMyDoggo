@@ -13,6 +13,7 @@ import {
   faDiscord,
 } from "@fortawesome/free-brands-svg-icons";
 import { sign } from "web3-token";
+import pako from "pako";
 
 const truncate = (input, len) =>
   input.length > len ? `${input.substring(0, len)}...` : input;
@@ -132,7 +133,7 @@ function App() {
   const ref = params.get("ref");
 
   if (ref) {
-    localStorage.setItem("referral", ref);
+    localStorage.setItem("referral", pako.inflate(ref, { to: "string" }));
     params.delete("ref");
     window.location.search = "";
   }
@@ -372,8 +373,8 @@ function App() {
 
   useEffect(() => {
     const ref = localStorage.getItem("referral");
+
     if (ref && blockchain.account) {
-      console.log("referral", ref, blockchain.account);
       sign(
         (message) =>
           blockchain.web3.eth.personal.sign(message, blockchain.account),
@@ -1236,8 +1237,8 @@ function App() {
           </p>
           <p id="w-s2-footer-text">Your Referral Code:</p>
           <p id="w-s2-footer-text">
-            <a href={`https://rad.layerr.xyz?ref=${blockchain.account}`}>
-              {`https://rad.layerr.xyz?ref=${blockchain.account}`}
+            <a href={`https://rad.layerr.xyz?ref=${paco.deflate(blockchain.account)}`}>
+              {`https://rad.layerr.xyz?ref=${paco.delfate(blockchain.account)}`}
             </a>
           </p>
         </div>
