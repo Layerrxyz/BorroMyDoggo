@@ -5,6 +5,13 @@ import { fetchDog } from "./redux/dog/dogActions";
 import * as s from "./styles/globalStyles";
 import styled from "styled-components";
 import Web3 from "web3";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faInstagram,
+  faTwitter,
+  faLinkedin,
+  faDiscord,
+} from "@fortawesome/free-brands-svg-icons";
 
 const truncate = (input, len) =>
   input.length > len ? `${input.substring(0, len)}...` : input;
@@ -367,12 +374,62 @@ function App() {
         <HeaderContainer style={{ paddingLeft: 48, paddingRight: 48 }}>
           <LogoContainer>
             <StyledLogo alt={"logo"} src={"/config/images/logo.png"} />
-            <p>
-              Contracts audited by{" "}
+          </LogoContainer>
+          <LogoContainer>
+            <div id="w-s2-footer">
+              <div id="w-s2-footer-socials">
+                <a
+                  className="socialicon"
+                  href="https://www.instagram.com/layerrxyz/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <div className="w-socialinner">
+                    <FontAwesomeIcon icon={faInstagram} size="1x" />
+                  </div>
+                </a>
+                <a
+                  className="socialicon"
+                  href="https://twitter.com/Layerrxyz"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <div className="w-socialinner">
+                    <FontAwesomeIcon icon={faTwitter} size="1x" />
+                  </div>
+                </a>
+                <a
+                  className="socialicon"
+                  href="https://discord.gg/d84gxvthmj"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <div className="w-socialinner">
+                    <FontAwesomeIcon icon={faDiscord} size="1x" />
+                  </div>
+                </a>
+                <a
+                  className="socialicon"
+                  href="https://www.linkedin.com/company/layerrxyz/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <div className="w-socialinner">
+                    <FontAwesomeIcon icon={faLinkedin} size="1x" />
+                  </div>
+                </a>
+              </div>
+            </div>
+          </LogoContainer>
+
+          <LogoContainer>
+            <s.TextTitle>
+              Contracts audited by
               <a href="https://twitter.com/0xQuit">@0xQuit</a> of
               <a href="https://boringsecurity.com">@SECDAO</a>
-            </p>
+            </s.TextTitle>
           </LogoContainer>
+
           <NavContainer>
             <NavButton
               onClick={() => {
@@ -1132,6 +1189,9 @@ function App() {
             <s.SpacerMedium />
           </s.Container>
           <s.SpacerLarge />
+          <div id="w-s2-footer-text">
+            Layerr Inc. © 2023 All Rights Reserved
+          </div>
         </ResponsiveWrapper>
         <s.SpacerMedium />
       </s.Container>

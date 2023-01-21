@@ -157,3 +157,26 @@ body {
 html {
   background-color: "#4C4C4C";
 }
+
+
+#w-s2-footer {
+    display: flex;
+    align-items: center;
+    flex-direction: column;}
+#w-s2-footer-socials {
+    display: flex;
+    justify-content: space-between;
+    width: 170px;
+    color: white;
+    margin-top: 0px;
+    margin-bottom: 20px;
+}
+.w-socialinner {
+    color: white;
+    font-size: 20px;
+}
+#w-s2-footer-text {
+    margin-bottom: 55px;
+    text-align: center;
+    color: white;
+}

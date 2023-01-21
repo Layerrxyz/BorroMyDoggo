@@ -1,6 +1,7 @@
 {
-  "short_name": "BorroMyDoggo",
-  "name": "BorroMyDoggo",
+  "short_name": "Layerr's Rent A Dog",
+  "name": "Layerr Rent A Dog",
+  "description": "Rent a dog for a day, a week, a month or a year.",
   "icons": [
     {
       "src": "favicon.ico",
