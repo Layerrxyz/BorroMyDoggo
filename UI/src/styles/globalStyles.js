@@ -56,6 +56,7 @@ export const TextTitle = styled.p`
   font-size: 22px;
   font-weight: 500;
   line-height: 1.6;
+  text-align: center;
 `;
 
 export const TextSubTitle = styled.p`

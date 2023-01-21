@@ -281,6 +281,7 @@ function App() {
   };
 
   const toggleDogId = (position) => {
+    position = parseInt(position);
     const updateTokens = dogIds.map((item, index) =>
       index === position ? !item : item
     );
@@ -288,7 +289,7 @@ function App() {
       let totalCostWEI = 0;
       for (let i = 0; i < dog.availableDogs.length; i++) {
         if (updateTokens[dog.availableDogs[i].dogId]) {
-          totalCostWEI += dog.availableDogs[i].rentCost;
+          totalCostWEI += parseInt(dog.availableDogs[i].rentCost);
         }
       }
       setTotalCostToRent(totalCostWEI);
@@ -297,6 +298,7 @@ function App() {
   };
 
   const toggleBaycId = (position) => {
+    position = parseInt(position);
     const updateTokens = baycIds.map((item, index) =>
       index === position ? !item : item
     );
@@ -304,6 +306,7 @@ function App() {
   };
 
   const toggleMaycId = (position) => {
+    position = parseInt(position);
     const updateTokens = maycIds.map((item, index) =>
       index === position ? !item : item
     );
@@ -322,7 +325,7 @@ function App() {
   const getCurrentCost = (dogId) => {
     for (let i = 0; i < dog.availableDogs.length; i++) {
       if (dog.availableDogs[i].dogId == dogId) {
-        return dog.availableDogs[i].rentCost;
+        return parseInt(dog.availableDogs[i].rentCost);
       }
     }
     return 0;
@@ -426,7 +429,7 @@ function App() {
             <s.TextTitle>
               Contracts audited by
               <a href="https://twitter.com/0xQuit">@0xQuit</a> of
-              <a href="https://boringsecurity.com">@SECDAO</a>
+              <a href="https://boringsecurity.com">@BoringSECDAO</a>
             </s.TextTitle>
           </LogoContainer>
 
