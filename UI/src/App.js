@@ -86,9 +86,6 @@ export const LogoContainer = styled.div`
   justify-content: center;
   align-items: center;
   width: 100%;
-  @media (min-width: 1500px) {
-    width: 600px;
-  }
 `;
 
 export const NavContainer = styled.div`
@@ -99,10 +96,6 @@ export const NavContainer = styled.div`
   align-items: flex-end;
   flex-wrap: wrap;
   width: 100%;
-  @media (min-width: 1500px) {
-    width: 900px;
-    justify-content: flex-end;
-  }
 `;
 
 function App() {
