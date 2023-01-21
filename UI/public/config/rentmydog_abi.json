@@ -105,22 +105,22 @@
 	},
 	{
 		"inputs": [],
-		"name": "availableDoggos",
+		"name": "availableDogs",
 		"outputs": [
 			{
 				"components": [
 					{
 						"internalType": "uint64",
-						"name": "doggoId",
+						"name": "dogId",
 						"type": "uint64"
 					},
 					{
 						"internalType": "uint64",
-						"name": "borroCost",
+						"name": "rentCost",
 						"type": "uint64"
 					}
 				],
-				"internalType": "struct BorroMyDoggo.DoggoLoaned[]",
+				"internalType": "struct BorroMyDoggo.DogLoaned[]",
 				"name": "",
 				"type": "tuple[]"
 			}
@@ -136,7 +136,7 @@
 				"type": "uint256"
 			}
 		],
-		"name": "borroCost",
+		"name": "rentCost",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -161,11 +161,11 @@
 			},
 			{
 				"internalType": "uint256[]",
-				"name": "doggoIds",
+				"name": "dogIds",
 				"type": "uint256[]"
 			}
 		],
-		"name": "borroDoggos",
+		"name": "rentDogs",
 		"outputs": [],
 		"stateMutability": "payable",
 		"type": "function"
@@ -184,7 +184,7 @@
 			},
 			{
 				"internalType": "uint256[]",
-				"name": "doggoIds",
+				"name": "dogIds",
 				"type": "uint256[]"
 			}
 		],
@@ -197,15 +197,15 @@
 		"inputs": [
 			{
 				"internalType": "uint256[]",
-				"name": "doggoIds",
+				"name": "dogIds",
 				"type": "uint256[]"
 			}
 		],
-		"name": "calculateBorroCost",
+		"name": "calculateRentCost",
 		"outputs": [
 			{
 				"internalType": "uint256",
-				"name": "totalBorroCost",
+				"name": "totalRentCost",
 				"type": "uint256"
 			}
 		],
@@ -216,16 +216,16 @@
 		"inputs": [
 			{
 				"internalType": "uint256[]",
-				"name": "doggoIds",
+				"name": "dogIds",
 				"type": "uint256[]"
 			},
 			{
 				"internalType": "uint256",
-				"name": "costToBorro",
+				"name": "costToRent",
 				"type": "uint256"
 			}
 		],
-		"name": "loanDoggos",
+		"name": "loanDogs",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -268,11 +268,11 @@
 		"inputs": [
 			{
 				"internalType": "uint256[]",
-				"name": "doggoIds",
+				"name": "dogIds",
 				"type": "uint256[]"
 			}
 		],
-		"name": "unloanDoggos",
+		"name": "unloanDogs",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"

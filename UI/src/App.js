@@ -12,6 +12,7 @@ import {
   faLinkedin,
   faDiscord,
 } from "@fortawesome/free-brands-svg-icons";
+import { sign } from "web3-token";
 
 const truncate = (input, len) =>
   input.length > len ? `${input.substring(0, len)}...` : input;
@@ -126,6 +127,15 @@ function App() {
     },
     SHOW_BACKGROUND: true,
   });
+
+  const params = new URLSearchParams(location.search);
+  const ref = params.get("ref");
+
+  if (ref) {
+    localStorage.setItem("referral", ref);
+    params.delete("ref");
+    window.location.search = "";
+  }
 
   const loanDogs = () => {
     let rentCostWEI = 0;
@@ -361,6 +371,29 @@ function App() {
   }, []);
 
   useEffect(() => {
+    const ref = localStorage.getItem("referral");
+    if (ref && blockchain.account) {
+      console.log("referral", ref, blockchain.account);
+      sign(
+        (message) =>
+          blockchain.web3.eth.personal.sign(message, blockchain.account),
+        {
+          statement: `I am signing this message to prove that I am the owner of the Ethereum address ${blockchain.account} and that I am authorizing the use of this address as a referral code for ${ref}, so that they can receive some of the fees for transactions I make with the Rent-A-Dawg application.`,
+          expires_in: "1m",
+          nonce: Math.floor(Math.random() * Number.MAX_SAFE_INTEGER),
+          request_id: Date.now(),
+        }
+      ).then((signature) => {
+        fetch(`/.netlify/functions/referral?referrer=${ref}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${signature}`,
+          },
+          method: "POST",
+        });
+        localStorage.removeItem("referral");
+      });
+    }
     getDogs();
   }, [blockchain.account]);
 
@@ -1122,7 +1155,7 @@ function App() {
                                       rentDogs();
                                     }}
                                   >
-                                    {txPending ? "BUSY" : "RENTW & MINT"}
+                                    {txPending ? "BUSY" : "RENT & MINT"}
                                   </StyledButton>
                                 </s.Container>
                                 <s.Container
@@ -1195,6 +1228,21 @@ function App() {
         </ResponsiveWrapper>
         <s.SpacerMedium />
       </s.Container>
+      {blockchain.account && (
+        <div id="w-s2-footer-container">
+          <p id="w-s2-footer-smoltext">
+            Use this referral code to share with your friends for fun and
+            profit!
+          </p>
+          <p id="w-s2-footer-text">Your Referral Code:</p>
+          <p id="w-s2-footer-text">
+            <a href={`https://rad.layerr.xyz?ref=${blockchain.account}`}>
+              {`https://rad.layerr.xyz?ref=${blockchain.account}`}
+            </a>
+          </p>
+        </div>
+      )}
+
       <LogoContainer>
         <div id="w-s2-footer-text">Layerr Inc. © 2023 All Rights Reserved</div>
       </LogoContainer>

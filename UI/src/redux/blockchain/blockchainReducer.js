@@ -1,7 +1,7 @@
 const initialState = {
   loading: false,
   account: null,
-  borromydogContract: null,
+  rentmydogContract: null,
   helperContract: null,
   web3: null,
   errorMsg: "",
@@ -19,7 +19,7 @@ const blockchainReducer = (state = initialState, action) => {
         ...state,
         loading: false,
         account: action.payload.account,
-        borromydogContract: action.payload.borromydogContract,
+        rentmydogContract: action.payload.rentmydogContract,
         helperContract: action.payload.helperContract,
         web3: action.payload.web3,
       };

@@ -180,3 +180,27 @@ html {
     text-align: center;
     color: white;
 }
+#w-s2-footer-smoltext {
+    justify-self: center;
+    width: 70%;
+    border: 1px solid white;
+    text-align: center;
+    font-size: 12px;
+    color: #CCFFCC;
+}
+#w-s2-footer-text a {
+    color: white;
+    text-decoration: none;
+}
+p#w-s2-footer-text {
+    margin: 0;
+    padding: 0.4em;
+    color: white;
+}
+#w-s2-footer-container {
+    display: grid;
+    justify-content: center;
+    margin: 0.2em;
+    padding: 0 0 1em 0;
+}
+
