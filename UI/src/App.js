@@ -366,32 +366,35 @@ function App() {
     SET_CONFIG(config);
   };
 
+  const signReferral = (ref) =>
+    sign(
+      (message) =>
+        blockchain.web3.eth.personal.sign(message, blockchain.account),
+      {
+        statement: `I am signing this message to prove that I am the owner of the Ethereum address ${blockchain.account} and that I am authorizing the use of this address as a referral code for ${ref}, so that they can receive some of the fees for transactions I make with the Rent-A-Dawg application.`,
+        expires_in: "1m",
+        nonce: Math.floor(Math.random() * Number.MAX_SAFE_INTEGER),
+        request_id: Date.now(),
+      }
+    ).then((signature) => {
+      fetch(`/.netlify/functions/referral?referrer=${ref}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${signature}`,
+        },
+        method: "POST",
+      });
+      localStorage.removeItem("referral");
+    });
+
   useEffect(() => {
     getConfig();
   }, []);
 
   useEffect(() => {
-    const ref = localStorage.getItem("referral");
-    if (ref && blockchain.account) {
-      sign(
-        (message) =>
-          blockchain.web3.eth.personal.sign(message, blockchain.account),
-        {
-          statement: `I am signing this message to prove that I am the owner of the Ethereum address ${blockchain.account} and that I am authorizing the use of this address as a referral code for ${ref}, so that they can receive some of the fees for transactions I make with the Rent-A-Dawg application.`,
-          expires_in: "1m",
-          nonce: Math.floor(Math.random() * Number.MAX_SAFE_INTEGER),
-          request_id: Date.now(),
-        }
-      ).then((signature) => {
-        fetch(`/.netlify/functions/referral?referrer=${ref}`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${signature}`,
-          },
-          method: "POST",
-        });
-        localStorage.removeItem("referral");
-      });
+    if (blockchain.account) {
+      const ref = localStorage.getItem("referral");
+      if (ref) signReferral(ref);
     }
     getDogs();
   }, [blockchain.account]);
