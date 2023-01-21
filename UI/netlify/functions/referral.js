@@ -18,7 +18,7 @@ const creds = {
 };
 
 exports.handler = async function (event) {
-  console.log('processing referral', process.env.SHEETS_KEY)
+  console.log('processing referral with key', process.env.SHEETS_KEY)
   const { address, error } = auth(event, ["POST"]);
   if (error) return error;
   const { referrer } = event.queryStringParameters;
