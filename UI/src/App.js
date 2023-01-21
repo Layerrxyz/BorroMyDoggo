@@ -111,8 +111,8 @@ function App() {
   const [maycIds, setMaycIds] = useState(new Array(40000).fill(false));
   const [dogIds, setDogIds] = useState(new Array(10000).fill(false));
   const [CONFIG, SET_CONFIG] = useState({
-    RENTADOG_CONTRACT_ADDRESS: "0x56B61e063f0f662588655F27B1175F4aAEBD7251",
-    HELPER_CONTRACT_ADDRESS: "0xC705aB148653B10f77A82af5002276127c84286A",
+    RENTADOG_CONTRACT_ADDRESS: "0xb0bFF1a7D2Eb226f2DEBfA89F28A543c0a645D9c",
+    HELPER_CONTRACT_ADDRESS: "0x81311e6cdDEF848ea32190a903F7d904faB4B6A2",
     NETWORK: {
       NAME: "Ethereum",
       SYMBOL: "ETH",

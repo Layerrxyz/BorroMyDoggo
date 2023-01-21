@@ -12,9 +12,9 @@ const providerOptions = {
   walletconnect: {
     package: WalletConnectProvider, // required
     options: {
-      infuraId: "<<INFURA_ID>>", // required
+      infuraId: "e18c81fbdf844cdb81736acaa6edaf71", // required
       rpc: {
-        1: "https://mainnet.infura.io/v3/<<INFURA_ID>>"
+        1: "https://mainnet.infura.io/v3/e18c81fbdf844cdb81736acaa6edaf71"
       }
     }
   }, 
@@ -22,8 +22,8 @@ const providerOptions = {
     package: WalletLink, // Required
     options: {
       appName: "RentMyDog", // Required
-      infuraId: "<<INFURA_ID>>", // Required unless you provide a JSON RPC url; see `rpc` below
-      rpc: "https://mainnet.infura.io/v3/<<INFURA_ID>>", // Optional if `infuraId` is provided; otherwise it's required
+      infuraId: "e18c81fbdf844cdb81736acaa6edaf71", // Required unless you provide a JSON RPC url; see `rpc` below
+      rpc: "https://mainnet.infura.io/v3/e18c81fbdf844cdb81736acaa6edaf71", // Optional if `infuraId` is provided; otherwise it's required
       chainId: 1, // Optional. It defaults to 1 if not provided
       appLogoUrl: null, // Optional. Application logo image URL. favicon is used if unspecified
       darkMode: false // Optional. Use dark theme, defaults to false
