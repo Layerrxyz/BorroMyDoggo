@@ -258,7 +258,7 @@ function App() {
     }
     try {
       blockchain.rentmydogContract.methods
-        .rentDawgs(myBaycIds, myMaycIds, rentDogIds)
+        .rentADawgs(myBaycIds, myMaycIds, rentDogIds)
         .send({
           to: CONFIG.RENTMYDOG_CONTRACT_ADDRESS,
           from: blockchain.account,
