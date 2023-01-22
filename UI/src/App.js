@@ -292,7 +292,7 @@ function App() {
       let totalCostWEI = 0;
       for (let i = 0; i < dog.availableDogs.length; i++) {
         if (updateTokens[dog.availableDogs[i].dogId]) {
-          totalCostWEI += parseInt(dog.availableDogs[i].rentCost);
+          totalCostWEI += parseInt(dog.availableDogs[i].rentACost);
         }
       }
       setTotalCostToRent(totalCostWEI);
@@ -328,7 +328,7 @@ function App() {
   const getCurrentCost = (dogId) => {
     for (let i = 0; i < dog.availableDogs.length; i++) {
       if (dog.availableDogs[i].dogId == dogId) {
-        return parseInt(dog.availableDogs[i].rentCost);
+        return parseInt(dog.availableDogs[i].rentACost);
       }
     }
     return 0;
@@ -1031,14 +1031,14 @@ function App() {
                                     {dog.availableDogs
                                       .sort((a, b) => {
                                         if (
-                                          parseInt(a.rentCost) >
-                                          parseInt(b.rentCost)
+                                          parseInt(a.rentACost) >
+                                          parseInt(b.rentACost)
                                         ) {
                                           return 1;
                                         }
                                         if (
-                                          parseInt(a.rentCost) <
-                                          parseInt(b.rentCost)
+                                          parseInt(a.rentACost) <
+                                          parseInt(b.rentACost)
                                         ) {
                                           return -1;
                                         }
