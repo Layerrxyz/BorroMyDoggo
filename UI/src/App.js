@@ -159,7 +159,7 @@ function App() {
     }
     try {
       blockchain.rentmydogContract.methods
-        .loanDogs(dogsToLoan, rentCostWEI)
+        .loanDawgs(dogsToLoan, rentCostWEI)
         .send({
           to: CONFIG.RENTMYDOG_CONTRACT_ADDRESS,
           from: blockchain.account,
@@ -199,7 +199,7 @@ function App() {
     }
     try {
       blockchain.rentmydogContract.methods
-        .unloanDogs(dogsToUnloan)
+        .unloanDawgs(dogsToUnloan)
         .send({
           to: CONFIG.RENTMYDOG_CONTRACT_ADDRESS,
           from: blockchain.account,
@@ -258,7 +258,7 @@ function App() {
     }
     try {
       blockchain.rentmydogContract.methods
-        .rentDogs(myBaycIds, myMaycIds, rentDogIds)
+        .rentDawgs(myBaycIds, myMaycIds, rentDogIds)
         .send({
           to: CONFIG.RENTMYDOG_CONTRACT_ADDRESS,
           from: blockchain.account,
