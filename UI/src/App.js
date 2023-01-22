@@ -231,9 +231,9 @@ function App() {
     let myBaycIds = [];
     let myMaycIds = [];
     for (let i = 0; i < dog.availableDogs.length; i++) {
-      if (dogIds[dog.availableDogs[i].dogId]) {
-        rentDogIds.push(dog.availableDogs[i].dogId);
-        totalCostWEI += getCurrentCost(dog.availableDogs[i].dogId);
+      if (dogIds[dog.availableDogs[i].dawgId]) {
+        rentDogIds.push(dog.availableDogs[i].dawgId);
+        totalCostWEI += getCurrentCost(dog.availableDogs[i].dawgId);
       }
     }
     for (let i = 0; i < dog.baycTokens.length; i++) {
@@ -291,7 +291,7 @@ function App() {
     if (!sellBoostMode) {
       let totalCostWEI = 0;
       for (let i = 0; i < dog.availableDogs.length; i++) {
-        if (updateTokens[dog.availableDogs[i].dogId]) {
+        if (updateTokens[dog.availableDogs[i].dawgId]) {
           totalCostWEI += parseInt(dog.availableDogs[i].rentACost);
         }
       }
@@ -327,7 +327,7 @@ function App() {
 
   const getCurrentCost = (dogId) => {
     for (let i = 0; i < dog.availableDogs.length; i++) {
-      if (dog.availableDogs[i].dogId == dogId) {
+      if (dog.availableDogs[i].dawgId == dogId) {
         return parseInt(dog.availableDogs[i].rentACost);
       }
     }
@@ -1051,13 +1051,13 @@ function App() {
                                           style={{
                                             padding: "10px",
                                             margin: "5px",
-                                            backgroundColor: dogIds[obj.dogId]
+                                            backgroundColor: dogIds[obj.dawgId]
                                               ? "#33AA55FF"
                                               : "#FFFFFF00",
                                             borderRadius: "10px",
                                           }}
                                           onClick={(e) => {
-                                            toggleDogId(obj.dogId);
+                                            toggleDogId(obj.dawgId);
                                           }}
                                         >
                                           <s.TextDescription
@@ -1068,7 +1068,7 @@ function App() {
                                           >
                                             COST:{" "}
                                             {Math.floor(
-                                              getCurrentCost(obj.dogId) /
+                                              getCurrentCost(obj.dawgId) /
                                                 10 ** 16
                                             ) /
                                               10 ** 2}
@@ -1076,7 +1076,7 @@ function App() {
                                           </s.TextDescription>
                                           <s.SpacerSmall />
                                           <StyledButton>
-                                            DOG #{obj.dogId}
+                                            DOG #{obj.dawgId}
                                           </StyledButton>
                                         </s.Container>
                                       ))}
