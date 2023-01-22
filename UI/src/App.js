@@ -161,7 +161,7 @@ function App() {
       blockchain.rentmydogContract.methods
         .loanDawgs(dogsToLoan, rentCostWEI)
         .send({
-          to: CONFIG.RENTMYDOG_CONTRACT_ADDRESS,
+          to: CONFIG.RENTADOG_CONTRACT_ADDRESS,
           from: blockchain.account,
         })
         .once("error", (err) => {
@@ -201,7 +201,7 @@ function App() {
       blockchain.rentmydogContract.methods
         .unloanDawgs(dogsToUnloan)
         .send({
-          to: CONFIG.RENTMYDOG_CONTRACT_ADDRESS,
+          to: CONFIG.RENTADOG_CONTRACT_ADDRESS,
           from: blockchain.account,
         })
         .once("error", (err) => {
@@ -260,7 +260,7 @@ function App() {
       blockchain.rentmydogContract.methods
         .rentADawgs(myBaycIds, myMaycIds, rentDogIds)
         .send({
-          to: CONFIG.RENTMYDOG_CONTRACT_ADDRESS,
+          to: CONFIG.RENTADOG_CONTRACT_ADDRESS,
           from: blockchain.account,
           value: totalCostWEI,
         })
@@ -830,7 +830,7 @@ function App() {
                                     }}
                                   >
                                     RENTMYDOG ADDRESS:{" "}
-                                    {CONFIG.RENTMYDOG_CONTRACT_ADDRESS}
+                                    {CONFIG.RENTADOG_CONTRACT_ADDRESS}
                                   </s.TextDescription>
                                 </>
                               ) : null}
@@ -1203,7 +1203,7 @@ function App() {
                                     TO USE RENTMYDOG FOR SEWER PASS BOOSTS, USE
                                     DELEGATE.CASH TO DELEGATE CLAIMS TO THE
                                     RENTMYDOG CONTRACT ADDRESS{" "}
-                                    {CONFIG.RENTMYDOG_CONTRACT_ADDRESS}
+                                    {CONFIG.RENTADOG_CONTRACT_ADDRESS}
                                   </s.TextDescription>
                                   <s.SpacerMedium />
                                 </>
