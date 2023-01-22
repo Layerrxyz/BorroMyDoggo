@@ -41,7 +41,7 @@ export const fetchDog = (blockchainAccount) => {
         .call();
       let availableDogs = await store
         .getState()
-        .blockchain.rentmydogContract.methods.availableDogs()
+        .blockchain.rentmydogContract.methods.availableDawgs()
         .call();
 
       dispatch(
