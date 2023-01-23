@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { connect } from "./redux/blockchain/blockchainActions";
 import { fetchDog } from "./redux/dog/dogActions";
+import { fetchStats } from "./redux/stats/statsActions";
 import * as s from "./styles/globalStyles";
 import styled from "styled-components";
 import Web3 from "web3";
@@ -102,6 +103,7 @@ function App() {
   const dispatch = useDispatch();
   const blockchain = useSelector((state) => state.blockchain);
   const dog = useSelector((state) => state.dog);
+  const stats = useSelector((state) => state.stats);
   const [sellBoostMode, setSellBoostMode] = useState(true);
   const [txPending, setTXPending] = useState(false);
   const [feedback, setFeedback] = useState(``);
@@ -341,6 +343,10 @@ function App() {
     }
   };
 
+  const getStats = () => {
+    dispatch(fetchStats());
+  };
+
   const updateRentCost = (e) => {
     const cost = e.target.value;
     if (!cost || cost.match(/^\d{1,}(\.\d{0,4})?$/)) {
@@ -382,6 +388,7 @@ function App() {
 
   useEffect(() => {
     getConfig();
+    getStats();
   }, []);
 
   useEffect(() => {
@@ -393,6 +400,7 @@ function App() {
   }, [blockchain.account]);
 
   useEffect(() => {}, [sellBoostMode]);
+  useEffect(() => {}, [stats]);
 
   return (
     <s.Screen>
@@ -490,6 +498,7 @@ function App() {
             </NavButton>
             <NavButton
               onClick={() => {
+                getStats();
                 getDogs();
               }}
               style={{ backgroundColor: "var(--nav-button)" }}
@@ -512,6 +521,30 @@ function App() {
               boxShadow: false ? "0px" : "0px 5px 11px 2px rgba(0,0,0,0.7)",
             }}
           >
+            {false && !stats.loading && !stats.error ? <>
+              <s.Container ai={"center"} jc={"center"} fd={"row"}>
+                <s.TextDescription style={{color: "#FFFFFF", fontSize: "30px",}}>
+                  TIER 4 IN TOP 50: {stats.tier4Top50}
+                </s.TextDescription>
+                <s.SpacerSmall />
+                <s.TextDescription style={{color: "#FFFFFF", fontSize: "30px",}}>
+                  |
+                </s.TextDescription>
+                <s.SpacerSmall />
+                <s.TextDescription style={{color: "#FFFFFF", fontSize: "30px",}}>
+                  TOP RANK NON-TIER 4 (TIER): {stats.topRankNonTier4 == 0 ? ">50" : stats.topRankNonTier4 + " (" + stats.topNonTier4Tier + ")"}
+                </s.TextDescription>
+                <s.SpacerSmall />
+                <s.TextDescription style={{color: "#FFFFFF", fontSize: "30px",}}>
+                  |
+                </s.TextDescription>
+                <s.SpacerSmall />
+                <s.TextDescription style={{color: "#FFFFFF", fontSize: "30px",}}>
+                  BOOST VALUE: {(stats.lastT4Sale - stats.lastT3Sale)}E
+                </s.TextDescription>
+              </s.Container>
+              <s.SpacerLarge />
+            </> : null}
             {blockchain.account === "" ||
             blockchain.rentmydogContract === null ? (
               <s.Container ai={"center"} jc={"center"}>

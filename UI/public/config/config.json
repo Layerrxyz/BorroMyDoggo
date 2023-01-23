@@ -1,6 +1,8 @@
 {
   "RENTADOG_CONTRACT_ADDRESS": "0xb0bFF1a7D2Eb226f2DEBfA89F28A543c0a645D9c",
   "HELPER_CONTRACT_ADDRESS": "0x81311e6cdDEF848ea32190a903F7d904faB4B6A2",
+  "LEADERBOARD_URI": "https://seem16fbpf.execute-api.us-east-1.amazonaws.com/preprod/leaderboard-public",
+  "LAST_SALE_URI": "https://0xth0mas.app/rentadawg/lastsale.json",
   "NETWORK": {
     "NAME": "Ethereum",
     "SYMBOL": "ETH",
