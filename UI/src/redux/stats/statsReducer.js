@@ -1,6 +1,8 @@
 const initialState = {
   loading: false,
   tier4Top50: 0,
+  tier4Top100: 0,
+  tier4Top500: 0,
   topRankNonTier4: 0,
   topNonTier4Tier: 0,
   lastT1Sale: 0,
@@ -26,6 +28,8 @@ const statsReducer = (state = initialState, action) => {
         ...state,
         loading: false,
         tier4Top50: action.payload.tier4Top50,
+        tier4Top100: action.payload.tier4Top100,
+        tier4Top500: action.payload.tier4Top500,
         topRankNonTier4: action.payload.topRankNonTier4,
         topNonTier4Tier: action.payload.topNonTier4Tier,
         lastT1Sale: action.payload.lastT1Sale,

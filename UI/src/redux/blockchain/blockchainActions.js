@@ -79,8 +79,29 @@ export const connect = () => {
         Accept: "application/json",
       },
     });
+    const pmp_abiResponse = await fetch("/config/playmypass_abi.json", {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    });
+    const dc_abiResponse = await fetch("/config/delegate_cash_abi.json", {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    });
+    const sp_abiResponse = await fetch("/config/sewerpass_abi.json", {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    });
     const rentmydog_abi = await rentmydog_abiResponse.json();
     const helper_abi = await helper_abiResponse.json();
+    const playmypass_abi = await pmp_abiResponse.json();
+    const delegatecash_abi = await dc_abiResponse.json();
+    const sewerpass_abi = await sp_abiResponse.json();
     const configResponse = await fetch("/config/config.json", {
       headers: {
         "Content-Type": "application/json",
@@ -106,11 +127,26 @@ export const connect = () => {
             helper_abi,
             CONFIG.HELPER_CONTRACT_ADDRESS
           );
+          const playmypass_SmartContractObj = new Web3EthContract(
+            playmypass_abi,
+            CONFIG.PLAY_MY_PASS_CONTRACT_ADDRESS
+          );
+          const delegatecash_SmartContractObj = new Web3EthContract(
+            delegatecash_abi,
+            CONFIG.DELEGATE_CASH_CONTRACT_ADDRESS
+          );
+          const sewerpass_SmartContractObj = new Web3EthContract(
+            sewerpass_abi,
+            CONFIG.SEWER_PASS_CONTRACT_ADDRESS
+          );
           dispatch(
             connectSuccess({
               account: accounts[0],
               rentmydogContract: rentmydog_SmartContractObj,
               helperContract: helper_SmartContractObj,
+              playmypassContract: playmypass_SmartContractObj,
+              delegatecashContract: delegatecash_SmartContractObj,
+              sewerpassContract: sewerpass_SmartContractObj,
               web3: web3,
             })
           );

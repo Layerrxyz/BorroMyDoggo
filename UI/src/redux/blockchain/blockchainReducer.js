@@ -3,6 +3,8 @@ const initialState = {
   account: null,
   rentmydogContract: null,
   helperContract: null,
+  playmypassContract: null,
+  delegatecashContract: null,
   web3: null,
   errorMsg: "",
 };
@@ -21,6 +23,8 @@ const blockchainReducer = (state = initialState, action) => {
         account: action.payload.account,
         rentmydogContract: action.payload.rentmydogContract,
         helperContract: action.payload.helperContract,
+        playmypassContract: action.payload.playmypassContract,
+        delegatecashContract: action.payload.delegatecashContract,
         web3: action.payload.web3,
       };
     case "CONNECTION_FAILED":

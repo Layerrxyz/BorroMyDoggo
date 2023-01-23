@@ -52,13 +52,25 @@ export const fetchStats = () => {
       const lastSale = await lastSaleResponse.json();
 
       let tier4Top50 = 0;
+      let tier4Top100 = 0;
+      let tier4Top500 = 0;
       let topRankNonTier4 = 0;
       let topNonTier4Tier = 0;
-      for(let i = 0;i < leaderboard["records"].length;i++) {
-        if(leaderboard["records"][i]["character"]["tier"] == 4) { tier4Top50++; }
-        else if(topRankNonTier4 == 0 || leaderboard["records"][i]["rank"] < topRankNonTier4) { 
-          topRankNonTier4 = leaderboard["records"][i]["rank"]; 
-          topNonTier4Tier = leaderboard["records"][i]["character"]["tier"];
+      for(let i = 0;i < leaderboard.length;i++) {
+        if(leaderboard[i]["tier"] == 4) { 
+          if(leaderboard[i]["rank"] <= 500) {
+            tier4Top500++; 
+          }
+          if(leaderboard[i]["rank"] <= 100) {
+            tier4Top100++; 
+          }
+          if(leaderboard[i]["rank"] <= 50) {
+            tier4Top50++; 
+          }
+        }
+        else if(topRankNonTier4 == 0 || leaderboard[i]["rank"] < topRankNonTier4) { 
+          topRankNonTier4 = leaderboard[i]["rank"]; 
+          topNonTier4Tier = leaderboard[i]["tier"];
         }
       }
       let lastT1Sale = 0;
@@ -73,6 +85,8 @@ export const fetchStats = () => {
       dispatch(
         fetchStatsSuccess({
           tier4Top50,
+          tier4Top100,
+          tier4Top500,
           topRankNonTier4,
           topNonTier4Tier,
           lastT1Sale,

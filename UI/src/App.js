@@ -104,7 +104,7 @@ function App() {
   const blockchain = useSelector((state) => state.blockchain);
   const dog = useSelector((state) => state.dog);
   const stats = useSelector((state) => state.stats);
-  const [sellBoostMode, setSellBoostMode] = useState(true);
+  const [currentPage, setCurrentPage] = useState('SELL');
   const [txPending, setTXPending] = useState(false);
   const [feedback, setFeedback] = useState(``);
   const [costToRent, setCostToRent] = useState(0);
@@ -115,6 +115,8 @@ function App() {
   const [CONFIG, SET_CONFIG] = useState({
     RENTADOG_CONTRACT_ADDRESS: "0xb0bFF1a7D2Eb226f2DEBfA89F28A543c0a645D9c",
     HELPER_CONTRACT_ADDRESS: "0x81311e6cdDEF848ea32190a903F7d904faB4B6A2",
+    PLAY_MY_PASS_CONTRACT_ADDRESS: "0xa410AB313da9397f0d3Cabbc56eb61B08e5Ad49D",
+    DELEGATE_CASH_CONTRACT_ADDRESS: "0x00000000000076A84feF008CDAbe6409d2FE638B",
     NETWORK: {
       NAME: "Ethereum",
       SYMBOL: "ETH",
@@ -225,6 +227,62 @@ function App() {
     }
   };
 
+  const delegateToRAD = () => {
+    setFeedback("DELEGATING ACCESS...");
+    setTXPending(true);
+    try {
+      blockchain.delegatecashContract.methods
+        .delegateForAll(CONFIG.RENTADOG_CONTRACT_ADDRESS, true)
+        .send({
+          to: CONFIG.DELEGATE_CASh_CONTRACT_ADDRESS,
+          from: blockchain.account,
+        })
+        .once("error", (err) => {
+          console.log(err);
+          setFeedback("SORRY, SOMETHING WENT WRONG");
+          setTXPending(false);
+        })
+        .then((receipt) => {
+          console.log(receipt);
+          setFeedback(`YOUR WALLET IS DELEGATED`);
+          setTXPending(false);
+          dispatch(fetchDog(blockchain.account));
+        });
+    } catch (err) {
+      console.log(err);
+      setFeedback("SORRY, SOMETHING WENT WRONG");
+      setTXPending(false);
+    }
+  };
+
+  const playOurPass = () => {
+    setFeedback("DELEGATING ACCESS...");
+    setTXPending(true);
+    try {
+      blockchain.playmypassContract.methods
+        .delegateMe()
+        .send({
+          to: CONFIG.PLAY_MY_PASS_CONTRACT_ADDRESS,
+          from: blockchain.account,
+        })
+        .once("error", (err) => {
+          console.log(err);
+          setFeedback("SORRY, SOMETHING WENT WRONG");
+          setTXPending(false);
+        })
+        .then((receipt) => {
+          console.log(receipt);
+          setFeedback(`YOUR WALLET IS SETUP TO PLAY WITH OUR PASS`);
+          setTXPending(false);
+          dispatch(fetchDog(blockchain.account));
+        });
+    } catch (err) {
+      console.log(err);
+      setFeedback("SORRY, SOMETHING WENT WRONG");
+      setTXPending(false);
+    }
+  };
+
   const rentDogs = () => {
     setFeedback("RENT-ING");
     setTXPending(true);
@@ -290,7 +348,7 @@ function App() {
     const updateTokens = dogIds.map((item, index) =>
       index === position ? !item : item
     );
-    if (!sellBoostMode) {
+    if (currentPage == "BUY") {
       let totalCostWEI = 0;
       for (let i = 0; i < dog.availableDogs.length; i++) {
         if (updateTokens[dog.availableDogs[i].dawgId]) {
@@ -399,7 +457,7 @@ function App() {
     getDogs();
   }, [blockchain.account]);
 
-  useEffect(() => {}, [sellBoostMode]);
+  useEffect(() => {}, [currentPage]);
   useEffect(() => {}, [stats]);
 
   return (
@@ -473,10 +531,10 @@ function App() {
             <NavButton
               onClick={() => {
                 resetSelections();
-                setSellBoostMode(false);
+                setCurrentPage("BUY");
               }}
               style={{
-                backgroundColor: !sellBoostMode
+                backgroundColor: currentPage == "BUY"
                   ? "var(--nav-button-selected)"
                   : "var(--nav-button)",
               }}
@@ -486,16 +544,31 @@ function App() {
             <NavButton
               onClick={() => {
                 resetSelections();
-                setSellBoostMode(true);
+                setCurrentPage("SELL");
               }}
               style={{
-                backgroundColor: !sellBoostMode
-                  ? "var(--nav-button)"
-                  : "var(--nav-button-selected)",
+                backgroundColor: currentPage == "SELL"
+                  ? "var(--nav-button-selected)"
+                  : "var(--nav-button)",
               }}
             >
               SELL BOOSTS
             </NavButton>
+            { false ? 
+            <NavButton
+              onClick={() => {
+                resetSelections();
+                setCurrentPage("PLAY");
+              }}
+              style={{
+                backgroundColor: currentPage == "PLAY"
+                  ? "var(--nav-button-selected)"
+                  : "var(--nav-button)",
+              }}
+            >
+              PLAY OUR PASS
+            </NavButton>
+            : null }
             <NavButton
               onClick={() => {
                 getStats();
@@ -521,26 +594,16 @@ function App() {
               boxShadow: false ? "0px" : "0px 5px 11px 2px rgba(0,0,0,0.7)",
             }}
           >
-            {false && !stats.loading && !stats.error ? <>
-              <s.Container ai={"center"} jc={"center"} fd={"row"}>
-                <s.TextDescription style={{color: "#FFFFFF", fontSize: "30px",}}>
-                  TIER 4 IN TOP 50: {stats.tier4Top50}
+            {currentPage != "PLAY" && !stats.loading && !stats.error ? <>
+              <s.Container ai={"center"} jc={"center"} fd={"column"}>
+                <s.TextDescription style={{color: "#FFFFFF", fontSize: "30px", textAlign: "center"}}>
+                  TIER 4 IN TOP 100: <span style={{paddingLeft: "10px", color: "#CCCCFF", fontSize: "30px"}}>{stats.tier4Top100}</span>
                 </s.TextDescription>
-                <s.SpacerSmall />
-                <s.TextDescription style={{color: "#FFFFFF", fontSize: "30px",}}>
-                  |
+                <s.TextDescription style={{color: "#FFFFFF", fontSize: "30px", textAlign: "center"}}>
+                  TOP RANK NON-T4: <span style={{paddingLeft: "10px", color: "#CCCCFF", fontSize: "30px"}}>{stats.topRankNonTier4 == 0 ? ">500" : "#" + stats.topRankNonTier4 + " (T" + stats.topNonTier4Tier + ")"}</span>
                 </s.TextDescription>
-                <s.SpacerSmall />
-                <s.TextDescription style={{color: "#FFFFFF", fontSize: "30px",}}>
-                  TOP RANK NON-TIER 4 (TIER): {stats.topRankNonTier4 == 0 ? ">50" : stats.topRankNonTier4 + " (" + stats.topNonTier4Tier + ")"}
-                </s.TextDescription>
-                <s.SpacerSmall />
-                <s.TextDescription style={{color: "#FFFFFF", fontSize: "30px",}}>
-                  |
-                </s.TextDescription>
-                <s.SpacerSmall />
-                <s.TextDescription style={{color: "#FFFFFF", fontSize: "30px",}}>
-                  BOOST VALUE: {(stats.lastT4Sale - stats.lastT3Sale)}E
+                <s.TextDescription style={{color: "#FFFFFF", fontSize: "30px", textAlign: "center"}}>
+                  BOOST VALUE: <span style={{paddingLeft: "10px", color: "#CCCCFF", fontSize: "30px"}}>{Math.floor((stats.lastT4Sale - stats.lastT3Sale)*100)/100}E</span>
                 </s.TextDescription>
               </s.Container>
               <s.SpacerLarge />
@@ -585,7 +648,7 @@ function App() {
               <>
                 {
                   {
-                    true: (
+                    "SELL": (
                       <>
                         {dog.loading ? (
                           <>
@@ -836,7 +899,7 @@ function App() {
                                   <s.SpacerLarge />
                                   <s.TextDescription
                                     style={{
-                                      color: "#FFFFFF",
+                                      color: "#DFAA13",
                                       fontSize: "40px",
                                       textAlign: "center",
                                     }}
@@ -846,18 +909,18 @@ function App() {
                                   <s.SpacerSmall />
                                   <s.TextDescription
                                     style={{
-                                      color: "#FFFFFF",
+                                      color: "#DFAA13",
                                       fontSize: "20px",
                                       textAlign: "center",
                                     }}
                                   >
                                     TO SELL DOGS BOOSTS, USE DELEGATE.CASH TO
                                     DELEGATE FROM YOUR DOG WALLET TO THE
-                                    RENTMYDOG CONTRACT
+                                    RENTMYDOG CONTRACT OR CLICK THE DELEGATE ALL BUTTON BELOW
                                   </s.TextDescription>
                                   <s.TextDescription
                                     style={{
-                                      color: "#FFFFFF",
+                                      color: "#DFAA13",
                                       fontSize: "20px",
                                       textAlign: "center",
                                     }}
@@ -865,6 +928,16 @@ function App() {
                                     RENTMYDOG ADDRESS:{" "}
                                     {CONFIG.RENTADOG_CONTRACT_ADDRESS}
                                   </s.TextDescription>
+                                      <s.SpacerSmall />
+                                      <StyledButton
+                                        disabled={txPending}
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          delegateToRAD();
+                                        }}
+                                      >
+                                        {txPending ? "BUSY" : "DELEGATE ALL"}
+                                      </StyledButton>
                                 </>
                               ) : null}
                             </s.Container>
@@ -872,7 +945,7 @@ function App() {
                         )}
                       </>
                     ),
-                    false: (
+                    "BUY": (
                       <>
                         {dog.loading ? (
                           <>
@@ -1216,28 +1289,48 @@ function App() {
                                 (obj) => !obj.claimed && !obj.delegated
                               ).length > 0 ? (
                                 <>
+                                  <s.SpacerLarge />
                                   <s.TextDescription
                                     style={{
-                                      color: "#FFFFFF",
+                                      color: "#DFAA13",
                                       fontSize: "40px",
                                       textAlign: "center",
                                     }}
                                   >
                                     YOU HAVE APES THAT ARE NOT DELEGATED
                                   </s.TextDescription>
-                                  <s.SpacerMedium />
+                                  <s.SpacerSmall />
                                   <s.TextDescription
                                     style={{
-                                      color: "#FFFFFF",
+                                      color: "#DFAA13",
                                       fontSize: "20px",
                                       textAlign: "center",
                                     }}
                                   >
                                     TO USE RENTMYDOG FOR SEWER PASS BOOSTS, USE
                                     DELEGATE.CASH TO DELEGATE CLAIMS TO THE
-                                    RENTMYDOG CONTRACT ADDRESS{" "}
+                                    RENTMYDOG CONTRACT ADDRESS OR CLICK THE DELEGATE ALL BUTTON BELOW
+                                  </s.TextDescription>
+                                  <s.TextDescription
+                                    style={{
+                                      color: "#DFAA13",
+                                      fontSize: "20px",
+                                      textAlign: "center",
+                                    }}
+                                  >
+                                    RENTMYDOG ADDRESS:{" "}
                                     {CONFIG.RENTADOG_CONTRACT_ADDRESS}
                                   </s.TextDescription>
+                                      <s.SpacerSmall />
+                                      <StyledButton
+                                        disabled={txPending}
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          delegateToRAD();
+                                        }}
+                                      >
+                                        {txPending ? "BUSY" : "DELEGATE ALL"}
+                                      </StyledButton>
                                   <s.SpacerMedium />
                                 </>
                               ) : null}
@@ -1246,7 +1339,77 @@ function App() {
                         )}
                       </>
                     ),
-                  }[sellBoostMode]
+                    "PLAY": (
+                      <>
+                        {dog.loading ? (
+                          <>
+                            <s.Container
+                              ai={"center"}
+                              jc={"center"}
+                              fd={"column"}
+                              fw={"wrap"}
+                            >
+                              <s.Container
+                                ai={"center"}
+                                jc={"center"}
+                                fd={"row"}
+                                fw={"wrap"}
+                              >
+                                <s.TextDescription
+                                  style={{ color: "#FFFFFF", fontSize: "30px" }}
+                                >
+                                  LOADING...
+                                </s.TextDescription>
+                              </s.Container>
+                            </s.Container>
+                          </>
+                        ) : (
+                          <>
+                            <s.Container
+                              ai={"center"}
+                              jc={"center"}
+                              fd={"column"}
+                              fw={"wrap"}
+                            >
+                              { dog.playMyPassBalance > 0 ? 
+                                <>
+                              { !dog.playMyPassDelegated ? <>
+                              <s.TextDescription style={{ color: "#FFFFFF", fontSize: "30px", textAlign: "center" }}>
+                                PRESS THE DELEGATE ME BUTTON BELOW TO SET UP YOUR WALLET TO HAVE ACCESS TO OUR SEWER PASSES
+                              </s.TextDescription>
+                              <s.SpacerSmall />
+                              <StyledButton disabled={txPending} onClick={(e) => {e.preventDefault(); playOurPass();}}>
+                                {txPending ? "BUSY" : "DELEGATE ME"}
+                              </StyledButton>
+                                  <s.TextDescription
+                                    style={{
+                                      color: "#FFFFFF",
+                                      fontSize: "30px",
+                                    }}
+                                  >
+                                    {feedback}
+                                  </s.TextDescription>
+                              </> : <>
+                              <s.TextDescription
+                                style={{ color: "#FFFFFF", fontSize: "30px", textAlign: "center" }}
+                              >
+                                YOU ARE ALL SET, HEAD OVER TO THE DOOKEY DASH WEBSITE TO PLAY!
+                              </s.TextDescription>
+                              </>}</> :
+                                <>
+                                  <s.TextDescription
+                                    style={{ color: "#FFFFFF", fontSize: "30px", textAlign: "center" }}
+                                  >
+                                    NO PASSES CURRENTLY DEPOSITED, PLEASE COME BACK SOON
+                                  </s.TextDescription>
+                                </>
+                              }
+                            </s.Container>
+                          </>
+                        )}
+                      </>
+                    ),
+                  }[currentPage]
                 }
               </>
             )}
