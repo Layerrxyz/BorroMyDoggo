@@ -1234,7 +1234,7 @@ function App() {
                                   >
                                     RENT COST:{" "}
                                     {Math.floor(totalCostToRent / 10 ** 16) /
-                                      10 ** 2}
+                                      10 ** 2}E
                                   </s.TextDescription>
                                 </s.Container>
                                 <s.Container
