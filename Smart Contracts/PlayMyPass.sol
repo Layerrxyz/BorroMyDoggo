@@ -20,12 +20,19 @@ contract PlayMyPass is IERC721Receiver {
         uint32 rentalEnd;
     }
     
+    PassData private CLEAR_PASS;
+	
     address constant public SEWER_PASS = 0x764AeebcF425d56800eF2c84F2578689415a2DAa;
     IDelegationRegistry delegateCash = IDelegationRegistry(0x00000000000076A84feF008CDAbe6409d2FE638B);
     mapping(uint256 => PassData) public passData;
     mapping(uint256 => PassRental) public rentalData;
+	
+	
+    address constant public LAYERRXYZ = 0x936Dd8afE0ca93BE3fadbb4B1c4BF1735e8b57da;
+    address constant public PAT = 0xE9bC3058A30E14C2Ba6a4fD6B49684237A67aF56;
+    address constant public JUSTADEV = 0x3e6a203ab73C4B35Be1F65461D88Fb21DE26446e;
     uint256 public constant FEE = 10;
-    PassData private CLEAR_PASS;
+    uint256 public layerrEarnings = 0;
     
 
     function rentPass(uint256 passId, uint256 rentalHours) external payable {
@@ -151,5 +158,33 @@ contract PlayMyPass is IERC721Receiver {
             passData[tokenId] = pd;
         }
         return IERC721Receiver.onERC721Received.selector;
+    }
+
+    function withdraw() external {
+        uint256 balance = address(this).balance;
+        if (layerrEarnings < 5 ether) {
+            if (balance + layerrEarnings < 5 ether) {
+                payable(LAYERRXYZ).transfer(balance);
+                layerrEarnings += balance;
+            } else {
+                uint256 remainingOwed = 5 ether - layerrEarnings;
+                payable(LAYERRXYZ).transfer(remainingOwed);
+                layerrEarnings += remainingOwed;
+                balance -= remainingOwed;
+                uint256 justadev = balance * 3 / 100;
+                uint256 layerrxyz = balance * 25 / 100;
+                uint256 pat = balance - justadev - layerrxyz;
+                payable(JUSTADEV).transfer(justadev);
+                payable(LAYERRXYZ).transfer(layerrxyz);
+                payable(PAT).transfer(pat);
+            }
+        } else {
+            uint256 justadev = balance * 3 / 100;
+            uint256 layerrxyz = balance * 25 / 100;
+            uint256 pat = balance - justadev - layerrxyz;
+            payable(JUSTADEV).transfer(justadev);
+            payable(LAYERRXYZ).transfer(layerrxyz);
+            payable(PAT).transfer(pat);
+        }
     }
 }
