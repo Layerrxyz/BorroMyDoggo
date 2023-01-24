@@ -605,6 +605,18 @@ function App() {
                 <s.TextDescription style={{color: "#FFFFFF", fontSize: "30px", textAlign: "center"}}>
                   BOOST VALUE: <span style={{paddingLeft: "10px", color: "#CCCCFF", fontSize: "30px"}}>{Math.floor((stats.lastT4Sale - stats.lastT3Sale)*100)/100}E</span>
                 </s.TextDescription>
+                { currentPage == "SELL" ? 
+                  <>
+                    <s.TextDescription style={{color: "#FFFFFF", fontSize: "30px", textAlign: "center"}}>
+                      FLOOR DIFF FOR UNCLAIMED: <span style={{paddingLeft: "10px", color: "#CCCCFF", fontSize: "30px"}}>{Math.floor((stats.floorUnclaimed - stats.floorClaimed)*100)/100}E</span>
+                    </s.TextDescription>
+                  </> :
+                  <>
+                    <s.TextDescription style={{color: "#FFFFFF", fontSize: "30px", textAlign: "center"}}>
+                      UNCLAIMED DOG FLOOR: <span style={{paddingLeft: "10px", color: "#CCCCFF", fontSize: "30px"}}>{Math.floor((stats.floorUnclaimed)*100)/100}E</span>
+                    </s.TextDescription>
+                  </>
+                }
               </s.Container>
               <s.SpacerLarge />
             </> : null}

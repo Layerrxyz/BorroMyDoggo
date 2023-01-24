@@ -9,6 +9,8 @@ const initialState = {
   lastT2Sale: 0,
   lastT3Sale: 0,
   lastT4Sale: 0,
+  floorClaimed: 0,
+  floorUnclaimed: 0,
   error: false,
   errorMsg: "",
 };
@@ -36,6 +38,8 @@ const statsReducer = (state = initialState, action) => {
         lastT2Sale: action.payload.lastT2Sale,
         lastT3Sale: action.payload.lastT3Sale,
         lastT4Sale: action.payload.lastT4Sale,
+        floorClaimed: action.payload.floorClaimed,
+        floorUnclaimed: action.payload.floorUnclaimed,
         error: false,
         errorMsg: "",
       };

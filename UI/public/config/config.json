@@ -6,6 +6,7 @@
   "SEWER_PASS_CONTRACT_ADDRESS": "0x764AeebcF425d56800eF2c84F2578689415a2DAa",
   "LEADERBOARD_URI": "https://api.dookeystats.com/top500",
   "LAST_SALE_URI": "https://0xth0mas.app/rentadawg/lastsale.json",
+  "FLOOR_VS_UNCLAIMED_URI": "https://0xth0mas.app/rentadawg/floor_vs_unclaimed.json",
   "NETWORK": {
     "NAME": "Ethereum",
     "SYMBOL": "ETH",

@@ -50,6 +50,14 @@ export const fetchStats = () => {
         },
       });
       const lastSale = await lastSaleResponse.json();
+      const floorVsUnclaimedResponse = await fetch(CONFIG.FLOOR_VS_UNCLAIMED_URI, {
+        cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      });
+      const floorVsUnclaimed = await floorVsUnclaimedResponse.json();
 
       let tier4Top50 = 0;
       let tier4Top100 = 0;
@@ -82,6 +90,9 @@ export const fetchStats = () => {
       lastT3Sale = lastSale["lastSale"]["3"];
       lastT4Sale = lastSale["lastSale"]["4"];
 
+      let floorClaimed = floorVsUnclaimed["floorClaimed"];
+      let floorUnclaimed = floorVsUnclaimed["floorUnclaimed"];
+
       dispatch(
         fetchStatsSuccess({
           tier4Top50,
@@ -93,6 +104,8 @@ export const fetchStats = () => {
           lastT2Sale,
           lastT3Sale,
           lastT4Sale,
+          floorClaimed,
+          floorUnclaimed,
         })
       );
     } catch (err) {
