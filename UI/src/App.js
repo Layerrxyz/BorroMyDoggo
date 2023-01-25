@@ -104,7 +104,7 @@ function App() {
   const blockchain = useSelector((state) => state.blockchain);
   const dog = useSelector((state) => state.dog);
   const stats = useSelector((state) => state.stats);
-  const [currentPage, setCurrentPage] = useState('SELL');
+  const [currentPage, setCurrentPage] = useState('BUY');
   const [txPending, setTXPending] = useState(false);
   const [feedback, setFeedback] = useState(``);
   const [costToRent, setCostToRent] = useState(0);
