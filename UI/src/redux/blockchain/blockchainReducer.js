@@ -5,6 +5,7 @@ const initialState = {
   helperContract: null,
   playmypassContract: null,
   delegatecashContract: null,
+  sewerpassContract: null,
   web3: null,
   errorMsg: "",
 };
@@ -25,6 +26,7 @@ const blockchainReducer = (state = initialState, action) => {
         helperContract: action.payload.helperContract,
         playmypassContract: action.payload.playmypassContract,
         delegatecashContract: action.payload.delegatecashContract,
+        sewerpassContract: action.payload.sewerpassContract,
         web3: action.payload.web3,
       };
     case "CONNECTION_FAILED":
