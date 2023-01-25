@@ -67,54 +67,64 @@ contract PlayMyPass is IERC721Receiver {
 
     /**
      * @notice Rents a Sewer Pass or extends rental for current renter
+     * @param passId the sewer pass token ID being rented
+     * @param rentalHours number of hours to rent the sewer pass for
      */
     function rentPass(uint256 passId, uint256 rentalHours) external payable {
         PassData memory pd = passData[passId];
-        if(!pd.rentalAllowed) { revert PassNotAvailable(); }
-        PassRental memory pr = rentalData[passId];
-        pr.passId = uint16(passId);
-        if(pr.rentalEnd < block.timestamp) {
-            if(pr.renter != msg.sender) { // extend rental
-                if(pr.renter != address(0)) { //revoke prior renter access
+        if(!pd.rentalAllowed) { revert PassNotAvailable(); } // revert if pass rental is disabled
+        PassRental memory pr = rentalData[passId]; // load current rental data
+        pr.passId = uint16(passId); //add passId to rental data, used later in UI functions
+
+        if(pr.rentalEnd < block.timestamp) { // prior rental has expired
+            if(pr.renter != msg.sender) { // new rental
+                if(pr.renter != address(0)) { //revoke prior renter access if it exists
                     delegateCash.delegateForToken(pr.renter, SEWER_PASS, passId, false);
                 }
                 delegateCash.delegateForToken(msg.sender, SEWER_PASS, passId, true);
             }
-            pr.renter = msg.sender;
-            pr.rentalEnd = uint32(block.timestamp + rentalHours * 1 hours);
-        } else {
+            pr.renter = msg.sender; // set renter
+            pr.rentalEnd = uint32(block.timestamp + rentalHours * 1 hours); // set rental end
+        } else { // current rental still active
             if(pr.renter == msg.sender) { // extend rental
                 pr.rentalEnd += uint32(rentalHours * 1 hours);
-            } else {
+            } else { // deny rental
                 revert PassCurrentlyRented();
             }
         }
-        processRentalPayment(pd.passOwner, uint256(pd.hourlyRentalPrice), rentalHours);
-        rentalData[passId] = pr;
+
+        processRentalPayment(pd.passOwner, uint256(pd.hourlyRentalPrice), rentalHours); // pay pass owner
+        rentalData[passId] = pr; // update state
     }
 
 
 
     /**
      * @notice Allows current renter for rented pass, or anyone for non-rented pass, to purchase a pass that the owner has set for sale
+     * @param passId the sewer pass token ID being purchased
      */
     function purchasePass(uint256 passId) external payable {
         PassData memory pd = passData[passId];
-        if(!pd.purchaseAllowed) { revert PassNotAvailable(); }
-        PassRental memory pr = rentalData[passId];
-        if(pr.renter != msg.sender && pr.rentalEnd < block.timestamp) { revert PassCurrentlyRented(); }
+        if(!pd.purchaseAllowed) { revert PassNotAvailable(); } // revert if pass purchase is disabled
+        PassRental memory pr = rentalData[passId]; // load current rental data
+
+        if(pr.renter != msg.sender && pr.rentalEnd < block.timestamp) { revert PassCurrentlyRented(); } // if currently rented, only current renter can purchase
         if(pr.renter != address(0)) { //clean up delegations
             delegateCash.delegateForToken(pr.renter, SEWER_PASS, passId, false);
         }
-        processPurchasePayment(pd.passOwner, uint256(pd.purchasePrice));
-        passData[passId] = CLEAR_PASS;
-        IERC721(SEWER_PASS).safeTransferFrom(address(this), msg.sender, passId);
+
+        processPurchasePayment(pd.passOwner, uint256(pd.purchasePrice)); // pay pass owner
+        passData[passId] = CLEAR_PASS; // clean up state
+        IERC721(SEWER_PASS).safeTransferFrom(address(this), msg.sender, passId); // transfer pass to purchaser
     }
 
 
 
     /**
      * @notice Internal function, converts calculates rental price, converts price from GWEI to WEI, checks payment amount, issues refund if necessary and sends payment to pass owner
+     * @param passOwner the address of the pass holder to send payment to
+     * @param hourlyRentalPrice the hourly rental price in GWEI for the sewer pass
+     * @param rentalHours number of hours to rent the sewer pass for
      */
     function processRentalPayment(address passOwner, uint256 hourlyRentalPrice, uint256 rentalHours) internal {
         uint256 rentalCost = hourlyRentalPrice * rentalHours * 1 gwei; // calculate cost, convert gwei to wei
@@ -124,6 +134,8 @@ contract PlayMyPass is IERC721Receiver {
 
     /**
      * @notice Internal function, converts purchase price from GWEI to WEI, checks payment amount, issues refund if necessary and sends payment to pass owner
+     * @param passOwner the address of the pass holder to send payment to
+     * @param purchasePrice the purchase price for the sewer pass in GWEI
      */
     function processPurchasePayment(address passOwner, uint256 purchasePrice) internal {
         purchasePrice = purchasePrice * 1 gwei; //convert gwei to wei
@@ -133,6 +145,7 @@ contract PlayMyPass is IERC721Receiver {
 
     /**
      * @notice Send rental and purchase payments to pass owner, subtracts 10% FEE
+     * @param passOwner the address of the pass holder to send payment to
      */
     function payPassOwner(address passOwner, uint256 price) internal {
         uint256 payment = price * FEE / 100;
@@ -140,10 +153,9 @@ contract PlayMyPass is IERC721Receiver {
         require(sent);
     }
 
-
-
     /**
      * @notice Refund for overpayment on rental and purchases
+     * @param price cost of the transaction
      */
     function refundIfOver(uint256 price) private {
         if(msg.value < price) { revert InsufficientPayment(); }
@@ -152,23 +164,27 @@ contract PlayMyPass is IERC721Receiver {
         }
     }
 
-
-
     /**
-     * @notice Withdraws sewer passes from contract
+     * @notice Withdraws sewer passes from contract, sewer pass cannot be withdrawn if actively rented
+     * @param passIds the tokenIds of sewer passes to withdraw from the rental contract
      */
     function withdrawPasses(uint256[] calldata passIds) external {
+        address passOwner;
         for(uint256 i = 0;i < passIds.length;i++) {
-            if(passData[passIds[i]].passOwner != msg.sender) { revert NotPassOwner(); }
-            if(rentalData[passIds[i]].rentalEnd >= block.timestamp) { revert PassCurrentlyRented(); }
-            passData[passIds[i]] = CLEAR_PASS;
-            IERC721(SEWER_PASS).safeTransferFrom(address(this), msg.sender, passIds[i]);
+            if(!isOwnerOrDelegate(msg.sender, passIds[i])) { revert NotPassOwner(); } // revert if msg.sender is not the owner of the pass or delegate
+            if(rentalData[passIds[i]].rentalEnd >= block.timestamp) { revert PassCurrentlyRented(); } // revert if pass is currently on rent
+            passOwner = passData[passIds[i]].passOwner;
+            passData[passIds[i]] = CLEAR_PASS; // clean up state
+            IERC721(SEWER_PASS).safeTransferFrom(address(this), passOwner, passIds[i]); // transfer pass back to owner
         }
     }
 
-
     /**
      * @notice Deposits passes to PlayMyPass and sets parameters
+     * @param passIds array of sewer pass IDs to deposit to the rental contract, pass owner must setApprovalForAll on Sewer Pass to the rental contract
+     * @param purchaseAllowed set if the pass is available for purchase
+     * @param purchasePrice set the purchase price for the pass, price is in GWEI
+     * @param hourlyRentalPrice set the hourly rental price for the pass, price is in GWEI
      */
     function depositPasses(uint256[] calldata passIds, bool[] calldata purchaseAllowed, uint40[] calldata purchasePrice, uint32[] calldata hourlyRentalPrice) external {
         require(passIds.length == purchaseAllowed.length 
@@ -180,19 +196,26 @@ contract PlayMyPass is IERC721Receiver {
         pd.rentalAllowed = true;
 
         for(uint256 i = 0;i < passIds.length;i++) {
-            if(IERC721(SEWER_PASS).ownerOf(passIds[i]) != msg.sender) { revert NotPassOwner(); }
+            if(IERC721(SEWER_PASS).ownerOf(passIds[i]) != msg.sender) { revert NotPassOwner(); } // revert if msg.sender is not the pass owner
+
             pd.passId = uint16(passIds[i]);
             pd.purchaseAllowed = purchaseAllowed[i];
             pd.purchasePrice = purchasePrice[i];
             pd.hourlyRentalPrice = hourlyRentalPrice[i];
-            passData[passIds[i]] = pd;
-            IERC721(SEWER_PASS).safeTransferFrom(msg.sender, address(this), passIds[i]);
+
+            passData[passIds[i]] = pd; // store pass rental parameters
+            IERC721(SEWER_PASS).safeTransferFrom(msg.sender, address(this), passIds[i]); // transfer pass to rental contract
         }
     }
 
 
     /**
      * @notice Updates pass rental/purchase parameters
+     * @param passIds array of sewer pass IDs to update rental parameters
+     * @param purchaseAllowed set if the pass is available for purchase
+     * @param rentalAllowed set if the pass is available for rent
+     * @param purchasePrice set the purchase price for the pass, price is in GWEI
+     * @param hourlyRentalPrice set the hourly rental price for the pass, price is in GWEI
      */
     function updatePasses(uint256[] calldata passIds, bool[] calldata purchaseAllowed, bool[] calldata rentalAllowed, uint40[] calldata purchasePrice, uint32[] calldata hourlyRentalPrice) external {
         require(passIds.length == rentalAllowed.length 
@@ -204,11 +227,13 @@ contract PlayMyPass is IERC721Receiver {
         for(uint256 i = 0;i < passIds.length;i++) {
             pd = passData[passIds[i]];
 
-            if(pd.passOwner != msg.sender) { revert NotPassOwner(); }
+            if(!isOwnerOrDelegate(msg.sender, passIds[i])) { revert NotPassOwner(); } // revert if msg.sender is not the owner or delegate for the sewer pass
+
             pd.purchaseAllowed = purchaseAllowed[i];
             pd.rentalAllowed = rentalAllowed[i];
             pd.purchasePrice = purchasePrice[i];
             pd.hourlyRentalPrice = hourlyRentalPrice[i];
+
             passData[passIds[i]] = pd;
         }
     }
@@ -218,10 +243,14 @@ contract PlayMyPass is IERC721Receiver {
     /**
      * @notice Receives sewer pass
                 If transfer was not initiated by PlayMyPass contract, sets default values that do not allow purchase or rental
+                Hot wallet delegate may update parameters after the pass is deposited by owner
+     * @param operator account that initiated the safeTransferFrom
+     * @param from account that owns the sewer pass and is transferring it into the rental contract
+     * @param tokenId the tokenId for the sewer pass
      */
     function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata) external returns (bytes4) {
         if(msg.sender != SEWER_PASS) { revert OnlySewerPass(); }
-        if(operator != address(this)) {
+        if(operator != address(this)) { // if safeTransferFrom was not initiated by rental contract, store default parameters which do not allow for purchase or rental
             PassData memory pd;
             pd.passId = uint16(tokenId);
             pd.passOwner = from;
@@ -250,6 +279,7 @@ contract PlayMyPass is IERC721Receiver {
 
     /**
      * @notice Returns an array of sewer pass tokens for specified address
+     * @param owner the account to get a list of sewer pass tokenIds for
      */
     function sewerpassTokenIds(address owner) external view returns(uint256[] memory tokenIds) {
         uint256 balance = IERC721(SEWER_PASS).balanceOf(owner);
@@ -264,12 +294,12 @@ contract PlayMyPass is IERC721Receiver {
      */
     function availableToRent() external view returns(PassData[] memory passes) {
         PassData[] memory tmpPasses = new PassData[](1000);
-        uint256[] memory pmpTokenIds = this.sewerpassTokenIds(address(this));
+        uint256[] memory tmpTokenIds = this.sewerpassTokenIds(address(this));
         uint256 tmpIndex = 0;
 
-        for(uint256 index = 0;index < pmpTokenIds.length;index++) {
-            if(passData[pmpTokenIds[index]].rentalAllowed && rentalData[pmpTokenIds[index]].rentalEnd < block.timestamp) {
-                tmpPasses[tmpIndex] = passData[pmpTokenIds[index]];
+        for(uint256 index = 0;index < tmpTokenIds.length;index++) {
+            if(passData[tmpTokenIds[index]].rentalAllowed && rentalData[tmpTokenIds[index]].rentalEnd < block.timestamp) {
+                tmpPasses[tmpIndex] = passData[tmpTokenIds[index]];
                 tmpIndex++;
             }
         }
@@ -282,15 +312,16 @@ contract PlayMyPass is IERC721Receiver {
 
     /**
      * @notice Returns an array of active passes owned by address
+     * @param owner the account to list sewer passes deposited to the rental contract
      */
     function myPassesForRent(address owner) external view returns(PassData[] memory passes) {
         PassData[] memory tmpPasses = new PassData[](1000);
-        uint256[] memory pmpTokenIds = this.sewerpassTokenIds(address(this));
+        uint256[] memory tmpTokenIds = this.sewerpassTokenIds(address(this));
         uint256 tmpIndex = 0;
 
-        for(uint256 index = 0;index < pmpTokenIds.length;index++) {
-            if(passData[pmpTokenIds[index]].passOwner == owner) {
-                tmpPasses[tmpIndex] = passData[pmpTokenIds[index]];
+        for(uint256 index = 0;index < tmpTokenIds.length;index++) {
+            if(isOwnerOrDelegate(owner, tmpTokenIds[index])) {
+                tmpPasses[tmpIndex] = passData[tmpTokenIds[index]];
                 tmpIndex++;
             }
         }
@@ -303,17 +334,18 @@ contract PlayMyPass is IERC721Receiver {
 
     /**
      * @notice Returns an array of active pass rentals, includes cost to extend rental and if it can be extended
+     * @param owner the address to check 
      */
     function myPassesRented(address owner) external view returns(PassRental[] memory rentals) {
         PassRental[] memory tmpRentals = new PassRental[](1000);
-        uint256[] memory pmpTokenIds = this.sewerpassTokenIds(address(this));
+        uint256[] memory tmpTokenIds = this.sewerpassTokenIds(address(this));
         uint256 tmpIndex = 0;
 
-        for(uint256 index = 0;index < pmpTokenIds.length;index++) {
-            if(rentalData[pmpTokenIds[index]].rentalEnd >= block.timestamp && passData[pmpTokenIds[index]].passOwner == owner) {
-                tmpRentals[tmpIndex] = rentalData[pmpTokenIds[index]];
-                tmpRentals[tmpIndex].hourlyRentalPrice = passData[pmpTokenIds[index]].hourlyRentalPrice;
-                tmpRentals[tmpIndex].cannotExtend = !passData[pmpTokenIds[index]].rentalAllowed;
+        for(uint256 index = 0;index < tmpTokenIds.length;index++) {
+            if(rentalData[tmpTokenIds[index]].rentalEnd >= block.timestamp && isOwnerOrDelegate(owner, tmpTokenIds[index])) {
+                tmpRentals[tmpIndex] = rentalData[tmpTokenIds[index]];
+                tmpRentals[tmpIndex].hourlyRentalPrice = passData[tmpTokenIds[index]].hourlyRentalPrice;
+                tmpRentals[tmpIndex].cannotExtend = !passData[tmpTokenIds[index]].rentalAllowed;
                 tmpIndex++;
             }
         }
@@ -326,17 +358,18 @@ contract PlayMyPass is IERC721Receiver {
 
     /**
      * @notice Returns an array of active pass rentals, includes cost to extend rental and if it can be extended
+     * @param renter the address to check for active rentals
      */
     function myRentals(address renter) external view returns(PassRental[] memory rentals) {
         PassRental[] memory tmpRentals = new PassRental[](1000);
-        uint256[] memory pmpTokenIds = this.sewerpassTokenIds(address(this));
+        uint256[] memory tmpTokenIds = this.sewerpassTokenIds(address(this));
         uint256 tmpIndex = 0;
 
-        for(uint256 index = 0;index < pmpTokenIds.length;index++) {
-            if(rentalData[pmpTokenIds[index]].rentalEnd >= block.timestamp && rentalData[pmpTokenIds[index]].renter == renter) {
-                tmpRentals[tmpIndex] = rentalData[pmpTokenIds[index]];
-                tmpRentals[tmpIndex].hourlyRentalPrice = passData[pmpTokenIds[index]].hourlyRentalPrice;
-                tmpRentals[tmpIndex].cannotExtend = !passData[pmpTokenIds[index]].rentalAllowed;
+        for(uint256 index = 0;index < tmpTokenIds.length;index++) {
+            if(rentalData[tmpTokenIds[index]].rentalEnd >= block.timestamp && rentalData[tmpTokenIds[index]].renter == renter) {
+                tmpRentals[tmpIndex] = rentalData[tmpTokenIds[index]];
+                tmpRentals[tmpIndex].hourlyRentalPrice = passData[tmpTokenIds[index]].hourlyRentalPrice;
+                tmpRentals[tmpIndex].cannotExtend = !passData[tmpTokenIds[index]].rentalAllowed;
                 tmpIndex++;
             }
         }
@@ -345,6 +378,27 @@ contract PlayMyPass is IERC721Receiver {
         for(uint256 index = 0;index < tmpIndex;index++) {
             rentals[index] = tmpRentals[index];
         }
+    }
+
+    
+    /**
+     * @notice check to see if operator is owner or delegate via delegate cash
+     * @param operator the address of the account to check for access
+     * @param passId the tokenId of the sewer pass
+     */
+    function isOwnerOrDelegate(
+        address operator,
+        uint256 passId
+    ) internal view returns (bool) {
+        address tokenOwner = passData[passId].passOwner;
+
+        return (operator == tokenOwner ||
+            delegateCash.checkDelegateForToken(
+                    operator,
+                    tokenOwner,
+                    SEWER_PASS,
+                    passId
+                ));
     }
 
     /**
