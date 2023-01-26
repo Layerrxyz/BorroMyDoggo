@@ -398,7 +398,7 @@ function App() {
     if (blockchain.account !== "" && blockchain.helperContract !== null) {
       resetSelections();
       dispatch(fetchDog(blockchain.account));
-    } else if(blockchain.account === null && blockchain.helperContract !== null) {
+    } else if(blockchain.account == "" && blockchain.helperContract !== null) {
       dispatch(fetchDog());
     }
   };
