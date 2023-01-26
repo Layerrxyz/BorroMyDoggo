@@ -1147,21 +1147,6 @@ function App() {
                                 dog.availableDogs.length > 0 ? (
                                   <>
                                     {dog.availableDogs
-                                      .sort((a, b) => {
-                                        if (
-                                          parseInt(a.rentACost) >
-                                          parseInt(b.rentACost)
-                                        ) {
-                                          return 1;
-                                        }
-                                        if (
-                                          parseInt(a.rentACost) <
-                                          parseInt(b.rentACost)
-                                        ) {
-                                          return -1;
-                                        }
-                                        return 0;
-                                      })
                                       .map((obj) => (
                                         <s.Container
                                           ai={"center"}

@@ -28,8 +28,6 @@ const dogReducer = (state = initialState, action) => {
         maycTokens: action.payload.maycTokens,
         bakcTokens: action.payload.bakcTokens,
         availableDogs: action.payload.availableDogs,
-        playMyPassDelegated: action.payload.playMyPassDelegated,
-        playMyPassBalance: action.payload.playMyPassBalance,
         error: false,
         errorMsg: "",
       };

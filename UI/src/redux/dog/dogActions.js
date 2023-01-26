@@ -51,23 +51,29 @@ export const fetchDog = (blockchainAccount) => {
         .getState()
         .blockchain.rentmydogContract.methods.availableDawgs()
         .call();
-      let playMyPassDelegated = await store
-      .getState()
-      .blockchain.delegatecashContract.methods.checkDelegateForAll(blockchainAccount, CONFIG.PLAY_MY_PASS_CONTRACT_ADDRESS)
-      .call();
-      let playMyPassBalance = await store
-      .getState()
-      .blockchain.sewerpassContract.methods.balanceOf(CONFIG.PLAY_MY_PASS_CONTRACT_ADDRESS)
-      .call();
+
+      availableDogs = [...availableDogs].sort((a, b) => {
+                                        if (
+                                          parseInt(a.rentACost) >
+                                          parseInt(b.rentACost)
+                                        ) {
+                                          return 1;
+                                        }
+                                        if (
+                                          parseInt(a.rentACost) <
+                                          parseInt(b.rentACost)
+                                        ) {
+                                          return -1;
+                                        }
+                                        return 0;
+                                      });
 
       dispatch(
         fetchDogSuccess({
           baycTokens,
           maycTokens,
           bakcTokens,
-          availableDogs,
-          playMyPassDelegated,
-          playMyPassBalance,
+          availableDogs
         })
       );
     } catch (err) {

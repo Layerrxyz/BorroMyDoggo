@@ -15,7 +15,8 @@ const providerOptions = {
       infuraId: "e18c81fbdf844cdb81736acaa6edaf71", // required
       rpc: {
         1: "https://mainnet.infura.io/v3/e18c81fbdf844cdb81736acaa6edaf71"
-      }
+      },
+      timeout: 30000
     }
   }, 
   walletlink: {
@@ -26,7 +27,8 @@ const providerOptions = {
       rpc: "https://mainnet.infura.io/v3/e18c81fbdf844cdb81736acaa6edaf71", // Optional if `infuraId` is provided; otherwise it's required
       chainId: 1, // Optional. It defaults to 1 if not provided
       appLogoUrl: null, // Optional. Application logo image URL. favicon is used if unspecified
-      darkMode: false // Optional. Use dark theme, defaults to false
+      darkMode: false, // Optional. Use dark theme, defaults to false
+      timeout: 30000
     }
   }
 };
