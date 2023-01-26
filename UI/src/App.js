@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { connect } from "./redux/blockchain/blockchainActions";
+import { connect, lightConnect } from "./redux/blockchain/blockchainActions";
 import { fetchDog } from "./redux/dog/dogActions";
 import { fetchStats } from "./redux/stats/statsActions";
 import * as s from "./styles/globalStyles";
@@ -398,6 +398,8 @@ function App() {
     if (blockchain.account !== "" && blockchain.helperContract !== null) {
       resetSelections();
       dispatch(fetchDog(blockchain.account));
+    } else if(blockchain.account === null && blockchain.helperContract !== null) {
+      dispatch(fetchDog());
     }
   };
 
@@ -447,6 +449,7 @@ function App() {
   useEffect(() => {
     getConfig();
     getStats();
+    dispatch(lightConnect());
   }, []);
 
   useEffect(() => {
@@ -569,13 +572,7 @@ function App() {
               PLAY OUR PASS
             </NavButton>
             : null }
-            <NavButton
-              onClick={() => {
-                getStats();
-                getDogs();
-              }}
-              style={{ backgroundColor: "var(--nav-button)" }}
-            >
+            <NavButton onClick={() => { getStats(); getDogs(); }} style={{ backgroundColor: "var(--nav-button)" }} >
               REFRESH
             </NavButton>
           </NavContainer>
@@ -620,362 +617,164 @@ function App() {
               </s.Container>
               <s.SpacerLarge />
             </> : null}
-            {blockchain.account === "" ||
-            blockchain.rentmydogContract === null ? (
-              <s.Container ai={"center"} jc={"center"}>
-                <s.TextDescription
-                  style={{
-                    textAlign: "center",
-                    color: "var(--accent-text)",
-                    fontSize: "30px",
-                  }}
-                >
-                  Connect to the {CONFIG.NETWORK.NAME} network
-                </s.TextDescription>
-                <s.SpacerSmall />
-                <StyledButton
-                  onClick={(e) => {
-                    e.preventDefault();
-                    dispatch(connect());
-                    getDogs();
-                  }}
-                >
-                  CONNECT
-                </StyledButton>
-                {blockchain.errorMsg !== "" ? (
-                  <>
-                    <s.SpacerSmall />
-                    <s.TextDescription
-                      style={{
-                        textAlign: "center",
-                        color: "var(--accent-text)",
-                      }}
-                    >
-                      {blockchain.errorMsg}
-                    </s.TextDescription>
-                  </>
-                ) : null}
-              </s.Container>
-            ) : (
-              <>
                 {
                   {
                     "SELL": (
                       <>
-                        {dog.loading ? (
-                          <>
-                            <s.Container
-                              ai={"center"}
-                              jc={"center"}
-                              fd={"column"}
-                              fw={"wrap"}
-                            >
-                              <s.Container
-                                ai={"center"}
-                                jc={"center"}
-                                fd={"row"}
-                                fw={"wrap"}
-                              >
-                                <s.TextDescription
-                                  style={{ color: "#FFFFFF", fontSize: "30px" }}
-                                >
-                                  LOADING...
+                        {
+                          blockchain.account === "" || blockchain.rentmydogContract === null ? (
+                            <>
+                              <s.SpacerMedium />
+                              <s.Container ai={"center"} jc={"center"}>
+                                <s.TextDescription style={{textAlign: "center", color: "var(--accent-text)", fontSize: "30px", }}>
+                                  Connect to the {CONFIG.NETWORK.NAME} network
                                 </s.TextDescription>
+                                <s.SpacerSmall />
+                                <StyledButton onClick={(e) => { e.preventDefault(); dispatch(connect()); getDogs(); }}>
+                                  CONNECT
+                                </StyledButton>
+                                {blockchain.errorMsg !== "" ? (
+                                  <>
+                                    <s.SpacerSmall />
+                                    <s.TextDescription style={{textAlign: "center", color: "var(--accent-text)", }}>
+                                      {blockchain.errorMsg}
+                                    </s.TextDescription>
+                                  </>
+                                ) : null}
                               </s.Container>
-                            </s.Container>
-                          </>
+                            </>
                         ) : (
                           <>
-                            <s.Container
-                              ai={"center"}
-                              jc={"center"}
-                              fd={"column"}
-                              fw={"wrap"}
-                            >
-                              {dog.bakcTokens.filter(
-                                (obj) => !obj.claimed && obj.delegated
-                              ).length > 0 ? (
-                                <>
-                                  <s.TextDescription
-                                    style={{
-                                      color: "#FFFFFF",
-                                      fontSize: "40px",
-                                      textAlign: "center",
-                                    }}
-                                  >
-                                    DOGS WITH BOOST TO SELL
-                                  </s.TextDescription>
-                                  <s.SpacerMedium />
-                                  <s.Container
-                                    ai={"center"}
-                                    jc={"center"}
-                                    fd="row"
-                                    fw={"wrap"}
-                                    style={{
-                                      display: "flex",
-                                      backgroundColor: "#111111",
-                                      padding: "10px",
-                                      width: "fit-content",
-                                    }}
-                                  >
-                                    {dog.bakcTokens &&
-                                    dog.bakcTokens.length > 0 ? (
-                                      <>
-                                        {dog.bakcTokens
-                                          .filter(
-                                            (obj) =>
-                                              !obj.claimed && obj.delegated
-                                          )
-                                          .map((obj) => (
-                                            <s.Container
-                                              ai={"center"}
-                                              jc={"center"}
-                                              style={{
-                                                padding: "10px",
-                                                margin: "5px",
-                                                backgroundColor: dogIds[
-                                                  obj.tokenId
-                                                ]
-                                                  ? "#33AA55FF"
-                                                  : "#FFFFFF00",
-                                                borderRadius: "10px",
-                                              }}
-                                              onClick={(e) => {
-                                                toggleDogId(obj.tokenId);
-                                              }}
-                                            >
-                                              {getCurrentCost(obj.tokenId) >
-                                              0 ? (
-                                                <>
-                                                  <s.TextDescription
-                                                    style={{
-                                                      color: "#FFFFFF",
-                                                      fontSize: "20px",
-                                                    }}
-                                                  >
-                                                    COST:{" "}
-                                                    {Math.floor(
-                                                      getCurrentCost(
-                                                        obj.tokenId
-                                                      ) /
-                                                        10 ** 16
-                                                    ) /
-                                                      10 ** 2}
-                                                    E
-                                                  </s.TextDescription>
-                                                </>
-                                              ) : (
-                                                <>
-                                                  <s.TextDescription
-                                                    style={{
-                                                      color: "#FFFFFF",
-                                                      fontSize: "20px",
-                                                    }}
-                                                  >
-                                                    NOT LISTED
-                                                  </s.TextDescription>
-                                                </>
-                                              )}
-                                              <s.SpacerSmall />
-                                              <StyledButton>
-                                                DOG #{obj.tokenId}
-                                              </StyledButton>
-                                            </s.Container>
-                                          ))}
-                                      </>
-                                    ) : (
-                                      <></>
-                                    )}
+                            {dog.loading ? (
+                              <>
+                                <s.Container ai={"center"} jc={"center"} fd={"column"} fw={"wrap"}>
+                                  <s.Container ai={"center"} jc={"center"} fd={"row"} fw={"wrap"}>
+                                    <s.TextDescription style={{ color: "#FFFFFF", fontSize: "30px" }}>
+                                      LOADING...
+                                    </s.TextDescription>
                                   </s.Container>
-                                  <s.SpacerMedium />
-                                  <s.Container
-                                    ai={"center"}
-                                    jc={"center"}
-                                    fd="column"
-                                    fw={"wrap"}
-                                    style={{
-                                      display: "flex",
-                                      backgroundColor: "#111111",
-                                      padding: "10px",
-                                      width: "fit-content",
-                                    }}
-                                  >
-                                    <s.Container
-                                      ai={"center"}
-                                      jc={"center"}
-                                      fd="row"
-                                      fw={"wrap"}
-                                      style={{
-                                        display: "flex",
-                                        backgroundColor: "#111111",
-                                        padding: "10px",
-                                        width: "fit-content",
-                                      }}
-                                    >
-                                      <s.TextDescription
-                                        style={{
-                                          color: "#FFFFFF",
-                                          fontSize: "20px",
-                                        }}
-                                      >
-                                        RENT COST:{" "}
+                                </s.Container>
+                              </>
+                            ) : (
+                              <>
+                                <s.Container ai={"center"} jc={"center"} fd={"column"} fw={"wrap"}>
+                                  {dog.bakcTokens.filter((obj) => !obj.claimed && obj.delegated).length > 0 ? (
+                                    <>
+                                      <s.TextDescription style={{ color: "#FFFFFF", fontSize: "40px", textAlign: "center", }} >
+                                        DOGS WITH BOOST TO SELL
+                                      </s.TextDescription>
+                                      <s.SpacerMedium />
+                                      <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                        style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }}>
+                                        {dog.bakcTokens &&
+                                        dog.bakcTokens.length > 0 ? (
+                                          <>
+                                            {dog.bakcTokens.filter((obj) => !obj.claimed && obj.delegated).map((obj) => (
+                                                <s.Container ai={"center"} jc={"center"}
+                                                  style={{padding: "10px", margin: "5px", backgroundColor: dogIds[obj.tokenId] ? "#33AA55FF" : "#FFFFFF00", borderRadius: "10px",}}
+                                                  onClick={(e) => { toggleDogId(obj.tokenId); }}>
+                                                  {getCurrentCost(obj.tokenId) > 0 ? (
+                                                    <>
+                                                      <s.TextDescription style={{color: "#FFFFFF",fontSize: "20px",}}>
+                                                        COST: {Math.floor(getCurrentCost(obj.tokenId) / 10 ** 16) / 10**2}E
+                                                      </s.TextDescription>
+                                                    </>
+                                                  ) : (
+                                                    <>
+                                                      <s.TextDescription style={{color: "#FFFFFF", fontSize: "20px", }}>
+                                                        NOT LISTED
+                                                      </s.TextDescription>
+                                                    </>
+                                                  )}
+                                                  <s.SpacerSmall />
+                                                  <StyledButton>
+                                                    DOG #{obj.tokenId}
+                                                  </StyledButton>
+                                                </s.Container>
+                                              ))}
+                                          </>
+                                        ) : (
+                                          <></>
+                                        )}
+                                      </s.Container>
+                                      <s.SpacerMedium />
+                                      <s.Container
+                                        ai={"center"} jc={"center"} fd="column" fw={"wrap"}
+                                        style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }} >
+                                        <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                          style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }} >
+                                          <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
+                                            RENT COST:{" "}
+                                          </s.TextDescription>
+                                          <s.SpacerSmall />
+                                          <input defaultValue={"0"} value={costToRent} type="text" 
+                                            style={{ width: "150px", height: "30px", fontSize: "25px", textAlign: "center", }} 
+                                            onChange={(e) => { updateRentCost(e); }} />
+                                        </s.Container>
+                                        <s.Container 
+                                          ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                          style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }}>
+                                            <StyledButton disabled={txPending} onClick={(e) => { e.preventDefault(); loanDogs(); }}>
+                                              {txPending ? "BUSY" : "LIST BOOSTS"}
+                                            </StyledButton>
+                                            <s.SpacerSmall />
+                                            <StyledButton disabled={txPending} onClick={(e) => { e.preventDefault(); unloanDogs(); }}>
+                                              {txPending ? "BUSY" : "DELIST BOOSTS"}
+                                            </StyledButton>
+                                        </s.Container>
+                                        <s.Container
+                                          ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                          style={{display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }}>
+                                            <s.TextDescription style={{ color: "#FFFFFF", fontSize: "30px", }}>
+                                              {feedback}
+                                            </s.TextDescription>
+                                        </s.Container>
+                                      </s.Container>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <s.TextDescription style={{ color: "#FFFFFF", fontSize: "40px", }}>
+                                        NO DOG BOOSTS TO SELL
+                                      </s.TextDescription>
+                                    </>
+                                  )}
+                                  {dog.bakcTokens.filter((obj) => !obj.claimed && !obj.delegated).length > 0 ? (
+                                    <>
+                                      <s.SpacerLarge />
+                                      <s.TextDescription style={{ color: "#DFAA13", fontSize: "40px", textAlign: "center", }}>
+                                        YOUR DOGS NEED TO BE DELEGATED
                                       </s.TextDescription>
                                       <s.SpacerSmall />
-                                      <input
-                                        defaultValue={"0"}
-                                        value={costToRent}
-                                        type="text"
-                                        style={{
-                                          width: "150px",
-                                          height: "30px",
-                                          fontSize: "25px",
-                                          textAlign: "center",
-                                        }}
-                                        onChange={(e) => {
-                                          updateRentCost(e);
-                                        }}
-                                      />
-                                    </s.Container>
-                                    <s.Container
-                                      ai={"center"}
-                                      jc={"center"}
-                                      fd="row"
-                                      fw={"wrap"}
-                                      style={{
-                                        display: "flex",
-                                        backgroundColor: "#111111",
-                                        padding: "10px",
-                                        width: "fit-content",
-                                      }}
-                                    >
-                                      <StyledButton
-                                        disabled={txPending}
-                                        onClick={(e) => {
-                                          e.preventDefault();
-                                          loanDogs();
-                                        }}
-                                      >
-                                        {txPending ? "BUSY" : "LIST BOOSTS"}
-                                      </StyledButton>
-                                      <s.SpacerSmall />
-                                      <StyledButton
-                                        disabled={txPending}
-                                        onClick={(e) => {
-                                          e.preventDefault();
-                                          unloanDogs();
-                                        }}
-                                      >
-                                        {txPending ? "BUSY" : "DELIST BOOSTS"}
-                                      </StyledButton>
-                                    </s.Container>
-                                    <s.Container
-                                      ai={"center"}
-                                      jc={"center"}
-                                      fd="row"
-                                      fw={"wrap"}
-                                      style={{
-                                        display: "flex",
-                                        backgroundColor: "#111111",
-                                        padding: "10px",
-                                        width: "fit-content",
-                                      }}
-                                    >
-                                      <s.TextDescription
-                                        style={{
-                                          color: "#FFFFFF",
-                                          fontSize: "30px",
-                                        }}
-                                      >
-                                        {feedback}
+                                      <s.TextDescription style={{ color: "#DFAA13", fontSize: "20px", textAlign: "center", }}>
+                                        TO SELL DOGS BOOSTS, USE DELEGATE.CASH TO
+                                        DELEGATE FROM YOUR DOG WALLET TO THE
+                                        RENTMYDOG CONTRACT OR CLICK THE DELEGATE ALL BUTTON BELOW
                                       </s.TextDescription>
-                                    </s.Container>
-                                  </s.Container>
-                                </>
-                              ) : (
-                                <>
-                                  <s.TextDescription
-                                    style={{
-                                      color: "#FFFFFF",
-                                      fontSize: "40px",
-                                    }}
-                                  >
-                                    NO DOG BOOSTS TO SELL
-                                  </s.TextDescription>
-                                </>
-                              )}
-
-                              {dog.bakcTokens.filter(
-                                (obj) => !obj.claimed && !obj.delegated
-                              ).length > 0 ? (
-                                <>
-                                  <s.SpacerLarge />
-                                  <s.TextDescription
-                                    style={{
-                                      color: "#DFAA13",
-                                      fontSize: "40px",
-                                      textAlign: "center",
-                                    }}
-                                  >
-                                    YOUR DOGS NEED TO BE DELEGATED
-                                  </s.TextDescription>
-                                  <s.SpacerSmall />
-                                  <s.TextDescription
-                                    style={{
-                                      color: "#DFAA13",
-                                      fontSize: "20px",
-                                      textAlign: "center",
-                                    }}
-                                  >
-                                    TO SELL DOGS BOOSTS, USE DELEGATE.CASH TO
-                                    DELEGATE FROM YOUR DOG WALLET TO THE
-                                    RENTMYDOG CONTRACT OR CLICK THE DELEGATE ALL BUTTON BELOW
-                                  </s.TextDescription>
-                                  <s.TextDescription
-                                    style={{
-                                      color: "#DFAA13",
-                                      fontSize: "20px",
-                                      textAlign: "center",
-                                    }}
-                                  >
-                                    RENTMYDOG ADDRESS:{" "}
-                                    {CONFIG.RENTADOG_CONTRACT_ADDRESS}
-                                  </s.TextDescription>
+                                      <s.TextDescription style={{ color: "#DFAA13", fontSize: "20px", textAlign: "center", }}>
+                                        RENTMYDOG ADDRESS:{" "}
+                                        {CONFIG.RENTADOG_CONTRACT_ADDRESS}
+                                      </s.TextDescription>
                                       <s.SpacerSmall />
                                       <StyledButton
                                         disabled={txPending}
-                                        onClick={(e) => {
-                                          e.preventDefault();
-                                          delegateToRAD();
-                                        }}
-                                      >
-                                        {txPending ? "BUSY" : "DELEGATE ALL"}
+                                        onClick={(e) => { e.preventDefault(); delegateToRAD(); }}>
+                                          {txPending ? "BUSY" : "DELEGATE ALL"}
                                       </StyledButton>
-                                </>
-                              ) : null}
-                            </s.Container>
+                                    </>
+                                  ) : null}
+                                </s.Container>
+                              </>
+                            )}
                           </>
-                        )}
-                      </>
+                        ) } </>
                     ),
                     "BUY": (
                       <>
                         {dog.loading ? (
                           <>
-                            <s.Container
-                              ai={"center"}
-                              jc={"center"}
-                              fd={"column"}
-                              fw={"wrap"}
-                            >
-                              <s.Container
-                                ai={"center"}
-                                jc={"center"}
-                                fd={"row"}
-                                fw={"wrap"}
-                              >
-                                <s.TextDescription
-                                  style={{ color: "#FFFFFF", fontSize: "30px" }}
-                                >
+                            <s.Container ai={"center"} jc={"center"} fd={"column"} fw={"wrap"}>
+                              <s.Container ai={"center"} jc={"center"} fd={"row"} fw={"wrap"}>
+                                <s.TextDescription style={{ color: "#FFFFFF", fontSize: "30px" }}>
                                   LOADING...
                                 </s.TextDescription>
                               </s.Container>
@@ -983,64 +782,22 @@ function App() {
                           </>
                         ) : (
                           <>
-                            <s.Container
-                              ai={"center"}
-                              jc={"center"}
-                              fd={"column"}
-                              fw={"wrap"}
-                            >
-                              {dog.baycTokens.filter(
-                                (obj) => !obj.claimed && obj.delegated
-                              ).length > 0 ? (
+                            <s.Container ai={"center"} jc={"center"} fd={"column"} fw={"wrap"}>
+                              {dog.baycTokens.filter((obj) => !obj.claimed && obj.delegated).length > 0 ? (
                                 <>
-                                  <s.TextDescription
-                                    style={{
-                                      color: "#FFFFFF",
-                                      fontSize: "40px",
-                                      textAlign: "center",
-                                    }}
-                                  >
+                                  <s.TextDescription style={{ color: "#FFFFFF", fontSize: "40px", textAlign: "center", }}>
                                     BAYC TO CLAIM WITH BOOST
                                   </s.TextDescription>
                                   <s.SpacerMedium />
                                   <s.Container
-                                    ai={"center"}
-                                    jc={"center"}
-                                    fd="row"
-                                    fw={"wrap"}
-                                    style={{
-                                      display: "flex",
-                                      backgroundColor: "#111111",
-                                      padding: "10px",
-                                      width: "fit-content",
-                                    }}
-                                  >
-                                    {dog.baycTokens &&
-                                    dog.baycTokens.length > 0 ? (
+                                    ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                    style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }}>
+                                    {dog.baycTokens && dog.baycTokens.length > 0 ? (
                                       <>
-                                        {dog.baycTokens
-                                          .filter(
-                                            (obj) =>
-                                              !obj.claimed && obj.delegated
-                                          )
-                                          .map((obj) => (
-                                            <s.Container
-                                              ai={"center"}
-                                              jc={"center"}
-                                              style={{
-                                                padding: "10px",
-                                                margin: "5px",
-                                                backgroundColor: baycIds[
-                                                  obj.tokenId
-                                                ]
-                                                  ? "#33AA55FF"
-                                                  : "#FFFFFF00",
-                                                borderRadius: "10px",
-                                              }}
-                                              onClick={(e) => {
-                                                toggleBaycId(obj.tokenId);
-                                              }}
-                                            >
+                                        {dog.baycTokens.filter((obj) => !obj.claimed && obj.delegated).map((obj) => (
+                                            <s.Container ai={"center"} jc={"center"}
+                                              style={{ padding: "10px", margin: "5px", backgroundColor: baycIds[obj.tokenId] ? "#33AA55FF" : "#FFFFFF00", borderRadius: "10px", }}
+                                              onClick={(e) => { toggleBaycId(obj.tokenId); }}>
                                               <StyledButton>
                                                 BAYC #{obj.tokenId}
                                               </StyledButton>
@@ -1055,58 +812,20 @@ function App() {
                                 </>
                               ) : null}
 
-                              {dog.maycTokens.filter(
-                                (obj) => !obj.claimed && obj.delegated
-                              ).length > 0 ? (
+                              {dog.maycTokens.filter((obj) => !obj.claimed && obj.delegated).length > 0 ? (
                                 <>
-                                  <s.TextDescription
-                                    style={{
-                                      color: "#FFFFFF",
-                                      fontSize: "40px",
-                                      textAlign: "center",
-                                    }}
-                                  >
+                                  <s.TextDescription style={{color: "#FFFFFF", fontSize: "40px", textAlign: "center", }}>
                                     MAYC TO CLAIM WITH BOOST
                                   </s.TextDescription>
                                   <s.SpacerMedium />
-                                  <s.Container
-                                    ai={"center"}
-                                    jc={"center"}
-                                    fd="row"
-                                    fw={"wrap"}
-                                    style={{
-                                      display: "flex",
-                                      backgroundColor: "#111111",
-                                      padding: "10px",
-                                      width: "fit-content",
-                                    }}
-                                  >
-                                    {dog.maycTokens &&
-                                    dog.maycTokens.length > 0 ? (
+                                  <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                    style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }}>
+                                    {dog.maycTokens && dog.maycTokens.length > 0 ? (
                                       <>
-                                        {dog.maycTokens
-                                          .filter(
-                                            (obj) =>
-                                              !obj.claimed && obj.delegated
-                                          )
-                                          .map((obj) => (
-                                            <s.Container
-                                              ai={"center"}
-                                              jc={"center"}
-                                              style={{
-                                                padding: "10px",
-                                                margin: "5px",
-                                                backgroundColor: maycIds[
-                                                  obj.tokenId
-                                                ]
-                                                  ? "#33AA55FF"
-                                                  : "#FFFFFF00",
-                                                borderRadius: "10px",
-                                              }}
-                                              onClick={(e) => {
-                                                toggleMaycId(obj.tokenId);
-                                              }}
-                                            >
+                                        {dog.maycTokens.filter((obj) => !obj.claimed && obj.delegated).map((obj) => (
+                                            <s.Container ai={"center"} jc={"center"}
+                                              style={{ padding: "10px", margin: "5px", backgroundColor: maycIds[obj.tokenId] ? "#33AA55FF" : "#FFFFFF00", borderRadius: "10px",}}
+                                              onClick={(e) => { toggleMaycId(obj.tokenId); }}>
                                               <StyledButton>
                                                 MAYC #{obj.tokenId}
                                               </StyledButton>
@@ -1121,61 +840,20 @@ function App() {
                                 </>
                               ) : null}
 
-                              <s.TextDescription
-                                style={{
-                                  color: "#FFFFFF",
-                                  fontSize: "40px",
-                                  textAlign: "center",
-                                }}
-                              >
+                              <s.TextDescription style={{ color: "#FFFFFF", fontSize: "40px", textAlign: "center", }}>
                                 DOG BOOSTS FOR SALE
                               </s.TextDescription>
                               <s.SpacerMedium />
-                              <s.Container
-                                ai={"center"}
-                                jc={"center"}
-                                fd="row"
-                                fw={"wrap"}
-                                style={{
-                                  display: "flex",
-                                  backgroundColor: "#111111",
-                                  padding: "10px",
-                                  width: "fit-content",
-                                }}
-                              >
-                                {dog.availableDogs &&
-                                dog.availableDogs.length > 0 ? (
+                              <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }}>
+                                {dog.availableDogs && dog.availableDogs.length > 0 ? (
                                   <>
-                                    {dog.availableDogs
-                                      .map((obj) => (
-                                        <s.Container
-                                          ai={"center"}
-                                          jc={"center"}
-                                          style={{
-                                            padding: "10px",
-                                            margin: "5px",
-                                            backgroundColor: dogIds[obj.dawgId]
-                                              ? "#33AA55FF"
-                                              : "#FFFFFF00",
-                                            borderRadius: "10px",
-                                          }}
-                                          onClick={(e) => {
-                                            toggleDogId(obj.dawgId);
-                                          }}
-                                        >
-                                          <s.TextDescription
-                                            style={{
-                                              color: "#FFFFFF",
-                                              fontSize: "20px",
-                                            }}
-                                          >
-                                            COST:{" "}
-                                            {Math.floor(
-                                              getCurrentCost(obj.dawgId) /
-                                                10 ** 16
-                                            ) /
-                                              10 ** 2}
-                                            E
+                                    {dog.availableDogs.map((obj) => (
+                                        <s.Container ai={"center"} jc={"center"}
+                                          style={{padding: "10px", margin: "5px", backgroundColor: dogIds[obj.dawgId] ? "#33AA55FF" : "#FFFFFF00", borderRadius: "10px",}}
+                                          onClick={(e) => { toggleDogId(obj.dawgId); }}>
+                                          <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
+                                            COST: {Math.floor(getCurrentCost(obj.dawgId) / 10**16) / 10**2}E
                                           </s.TextDescription>
                                           <s.SpacerSmall />
                                           <StyledButton>
@@ -1184,153 +862,93 @@ function App() {
                                         </s.Container>
                                       ))}
                                   </>
+                                  ) : (
+                                    <>
+                                      <s.TextDescription
+                                        style={{
+                                          color: "#FFFFFF",
+                                          fontSize: "30px",
+                                          textAlign: "center",
+                                        }}
+                                      >
+                                        NO DOGS AVAILABLE
+                                      </s.TextDescription>
+                                    </>
+                                  )}
+                              </s.Container>
+
+
+                              {blockchain.account === "" || blockchain.rentmydogContract === null ? (
+                                <>
+                                  <s.SpacerMedium />
+                                  <s.Container ai={"center"} jc={"center"}>
+                                    <s.TextDescription style={{ textAlign: "center", color: "var(--accent-text)", fontSize: "30px", }} >
+                                      Connect to the {CONFIG.NETWORK.NAME} network
+                                    </s.TextDescription>
+                                    <s.SpacerSmall />
+                                    <StyledButton onClick={(e) => { e.preventDefault(); dispatch(connect()); getDogs(); }}>
+                                      CONNECT
+                                    </StyledButton>
+                                    {blockchain.errorMsg !== "" ? (
+                                      <>
+                                        <s.SpacerSmall />
+                                        <s.TextDescription style={{ textAlign: "center", color: "var(--accent-text)", }}>
+                                          {blockchain.errorMsg}
+                                        </s.TextDescription>
+                                      </>
+                                    ) : null}
+                                  </s.Container>
+                                </>
                                 ) : (
                                   <>
-                                    <s.TextDescription
-                                      style={{
-                                        color: "#FFFFFF",
-                                        fontSize: "30px",
-                                        textAlign: "center",
-                                      }}
-                                    >
-                                      NO DOGS AVAILABLE
-                                    </s.TextDescription>
-                                  </>
-                                )}
-                              </s.Container>
+
                               <s.SpacerMedium />
-                              <s.Container
-                                ai={"center"}
-                                jc={"center"}
-                                fd="column"
-                                fw={"wrap"}
-                                style={{
-                                  display: "flex",
-                                  backgroundColor: "#111111",
-                                  padding: "10px",
-                                  width: "fit-content",
-                                }}
-                              >
-                                <s.Container
-                                  ai={"center"}
-                                  jc={"center"}
-                                  fd="row"
-                                  fw={"wrap"}
-                                  style={{
-                                    display: "flex",
-                                    backgroundColor: "#111111",
-                                    padding: "10px",
-                                    width: "fit-content",
-                                  }}
-                                >
-                                  <s.TextDescription
-                                    style={{
-                                      color: "#FFFFFF",
-                                      fontSize: "20px",
-                                    }}
-                                  >
-                                    RENT COST:{" "}
-                                    {Math.floor(totalCostToRent / 10 ** 16) /
-                                      10 ** 2}E
+                              <s.Container ai={"center"} jc={"center"} fd="column" fw={"wrap"}
+                                style={{display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content",}}>
+                                <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                  style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content",}}>
+                                  <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
+                                    RENT COST: {Math.floor(totalCostToRent / 10**16) / 10**2}E
                                   </s.TextDescription>
                                 </s.Container>
-                                <s.Container
-                                  ai={"center"}
-                                  jc={"center"}
-                                  fd="row"
-                                  fw={"wrap"}
-                                  style={{
-                                    display: "flex",
-                                    backgroundColor: "#111111",
-                                    padding: "10px",
-                                    width: "fit-content",
-                                  }}
-                                >
-                                  <StyledButton
-                                    disabled={txPending}
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      rentDogs();
-                                    }}
-                                  >
+                                <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                  style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }}>
+                                  <StyledButton disabled={txPending} onClick={(e) => { e.preventDefault(); rentDogs(); }}>
                                     {txPending ? "BUSY" : "RENT & MINT"}
                                   </StyledButton>
                                 </s.Container>
-                                <s.Container
-                                  ai={"center"}
-                                  jc={"center"}
-                                  fd="row"
-                                  fw={"wrap"}
-                                  style={{
-                                    display: "flex",
-                                    backgroundColor: "#111111",
-                                    padding: "10px",
-                                    width: "fit-content",
-                                  }}
-                                >
-                                  <s.TextDescription
-                                    style={{
-                                      color: "#FFFFFF",
-                                      fontSize: "30px",
-                                    }}
-                                  >
+                                <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                  style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }}>
+                                  <s.TextDescription style={{ color: "#FFFFFF", fontSize: "30px", }}>
                                     {feedback}
                                   </s.TextDescription>
                                 </s.Container>
                               </s.Container>
 
-                              {dog.baycTokens.filter(
-                                (obj) => !obj.claimed && !obj.delegated
-                              ).length > 0 ||
-                              dog.maycTokens.filter(
-                                (obj) => !obj.claimed && !obj.delegated
-                              ).length > 0 ? (
+                              {dog.baycTokens.filter((obj) => !obj.claimed && !obj.delegated).length > 0 ||
+                                dog.maycTokens.filter((obj) => !obj.claimed && !obj.delegated).length > 0 ? (
                                 <>
                                   <s.SpacerLarge />
-                                  <s.TextDescription
-                                    style={{
-                                      color: "#DFAA13",
-                                      fontSize: "40px",
-                                      textAlign: "center",
-                                    }}
-                                  >
+                                  <s.TextDescription style={{ color: "#DFAA13", fontSize: "40px", textAlign: "center", }}>
                                     YOU HAVE APES THAT ARE NOT DELEGATED
                                   </s.TextDescription>
                                   <s.SpacerSmall />
-                                  <s.TextDescription
-                                    style={{
-                                      color: "#DFAA13",
-                                      fontSize: "20px",
-                                      textAlign: "center",
-                                    }}
-                                  >
+                                  <s.TextDescription style={{color: "#DFAA13", fontSize: "20px", textAlign: "center", }}>
                                     TO USE RENTMYDOG FOR SEWER PASS BOOSTS, USE
                                     DELEGATE.CASH TO DELEGATE CLAIMS TO THE
                                     RENTMYDOG CONTRACT ADDRESS OR CLICK THE DELEGATE ALL BUTTON BELOW
                                   </s.TextDescription>
-                                  <s.TextDescription
-                                    style={{
-                                      color: "#DFAA13",
-                                      fontSize: "20px",
-                                      textAlign: "center",
-                                    }}
-                                  >
-                                    RENTMYDOG ADDRESS:{" "}
-                                    {CONFIG.RENTADOG_CONTRACT_ADDRESS}
+                                  <s.TextDescription style={{ color: "#DFAA13", fontSize: "20px", textAlign: "center", }} >
+                                    RENTMYDOG ADDRESS: {CONFIG.RENTADOG_CONTRACT_ADDRESS}
                                   </s.TextDescription>
-                                      <s.SpacerSmall />
-                                      <StyledButton
-                                        disabled={txPending}
-                                        onClick={(e) => {
-                                          e.preventDefault();
-                                          delegateToRAD();
-                                        }}
-                                      >
-                                        {txPending ? "BUSY" : "DELEGATE ALL"}
-                                      </StyledButton>
+                                  <s.SpacerSmall />
+                                  <StyledButton disabled={txPending} onClick={(e) => { e.preventDefault(); delegateToRAD(); }} >
+                                    {txPending ? "BUSY" : "DELEGATE ALL"}
+                                  </StyledButton>
                                   <s.SpacerMedium />
-                                </>
-                              ) : null}
+                                </>) : null}
+                              </> ) }
+
                             </s.Container>
                           </>
                         )}
@@ -1408,8 +1026,6 @@ function App() {
                     ),
                   }[currentPage]
                 }
-              </>
-            )}
             <s.SpacerMedium />
           </s.Container>
           <s.SpacerLarge />

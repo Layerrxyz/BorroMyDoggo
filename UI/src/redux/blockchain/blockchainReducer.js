@@ -1,6 +1,6 @@
 const initialState = {
   loading: false,
-  account: null,
+  account: "",
   rentmydogContract: null,
   helperContract: null,
   playmypassContract: null,
@@ -22,6 +22,17 @@ const blockchainReducer = (state = initialState, action) => {
         ...state,
         loading: false,
         account: action.payload.account,
+        rentmydogContract: action.payload.rentmydogContract,
+        helperContract: action.payload.helperContract,
+        playmypassContract: action.payload.playmypassContract,
+        delegatecashContract: action.payload.delegatecashContract,
+        sewerpassContract: action.payload.sewerpassContract,
+        web3: action.payload.web3,
+      };
+    case "LIGHT_CONNECTION_SUCCESS":
+      return {
+        ...state,
+        loading: false,
         rentmydogContract: action.payload.rentmydogContract,
         helperContract: action.payload.helperContract,
         playmypassContract: action.payload.playmypassContract,

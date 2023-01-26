@@ -22,31 +22,29 @@ const fetchDogFailed = (payload) => {
   };
 };
 
-export const fetchDog = (blockchainAccount) => {
+export const fetchDog = (blockchainAccount = "", retryCount = 0) => {
   return async (dispatch) => {
     dispatch(fetchDogRequest());
 
-    const configResponse = await fetch("/config/config.json", {
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-    });
-    const CONFIG = await configResponse.json();
-
     try {
-      let baycTokens = await store
-        .getState()
-        .blockchain.helperContract.methods.baycTokens(blockchainAccount)
-        .call();
-      let maycTokens = await store
-        .getState()
-        .blockchain.helperContract.methods.maycTokens(blockchainAccount)
-        .call();
-      let bakcTokens = await store
-        .getState()
-        .blockchain.helperContract.methods.bakcTokens(blockchainAccount)
-        .call();
+      let baycTokens = [];
+      let maycTokens = [];
+      let bakcTokens = [];
+
+      if(blockchainAccount != "") {
+        baycTokens = await store
+          .getState()
+          .blockchain.helperContract.methods.baycTokens(blockchainAccount)
+          .call();
+        maycTokens = await store
+          .getState()
+          .blockchain.helperContract.methods.maycTokens(blockchainAccount)
+          .call();
+        bakcTokens = await store
+          .getState()
+          .blockchain.helperContract.methods.bakcTokens(blockchainAccount)
+          .call();
+      }
       let availableDogs = await store
         .getState()
         .blockchain.rentmydogContract.methods.availableDawgs()
@@ -78,7 +76,11 @@ export const fetchDog = (blockchainAccount) => {
       );
     } catch (err) {
       console.log(err);
-      dispatch(fetchDogFailed("Could not load data from contract."));
+      if(retryCount < 3) {
+        dispatch(fetchDog(blockchainAccount, (retryCount + 1)));
+      } else {
+        dispatch(fetchDogFailed("Could not load data from contract."));
+      }
     }
   };
 };
