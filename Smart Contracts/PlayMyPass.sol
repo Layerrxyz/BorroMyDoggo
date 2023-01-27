@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./lib/IDelegationRegistry.sol";
+import "./lib/IBAYCSewerPass.sol";
 
 contract PlayMyPass is IERC721Receiver {
 
@@ -16,6 +17,8 @@ contract PlayMyPass is IERC721Receiver {
         uint32 hourlyRentalPrice; // stored in GWEI
         bool purchaseAllowed;
         bool rentalAllowed;
+        bool boredPass; // for view functions, not stored in state
+        bool dogPass; // for view functions, not stored in state
     }
 
     struct PassRental {
@@ -24,6 +27,8 @@ contract PlayMyPass is IERC721Receiver {
         uint32 rentalEnd;
         uint32 hourlyRentalPrice;
         bool cannotExtend;
+        bool boredPass; // for view functions, not stored in state
+        bool dogPass; // for view functions, not stored in state
     }
 
     /// @dev Thrown when an ERC721 that is not the SewerPass tries to call onERC721Received
@@ -40,6 +45,8 @@ contract PlayMyPass is IERC721Receiver {
     error OnlyDeployer();
     /// @dev Thrown when the deployer tries to "rescue" the sponsored token
     error CannotRescueOwnedToken();
+    /// @dev Thrown when renter tries to rent past max time
+    error SewersClosing();
     
     PassData private CLEAR_PASS;
 	
@@ -48,13 +55,9 @@ contract PlayMyPass is IERC721Receiver {
     mapping(uint256 => PassData) public passData;
     mapping(uint256 => PassRental) public rentalData;
 	
-	
-    address constant public LAYERRXYZ = 0x936Dd8afE0ca93BE3fadbb4B1c4BF1735e8b57da;
-    address constant public PAT = 0xE9bC3058A30E14C2Ba6a4fD6B49684237A67aF56;
-    address constant public JUSTADEV = 0x3e6a203ab73C4B35Be1F65461D88Fb21DE26446e;
-    address constant public JOSHONG = 0xaf469C4a0914938e6149CF621c54FB4b1EC0c202;
+	uint256 constant public SEWERS_CLOSING = 1675814400; //February 8th, 12:00AM GMT, give pass owners time to get pass back in wallet & play before score freeze
+    address constant public FEE_SPLITTER = 0x936Dd8afE0ca93BE3fadbb4B1c4BF1735e8b57da;
     uint256 public constant FEE = 10;
-    uint256 public layerrEarnings = 0;
     
     /// @dev store the deployer in case someone sends tokens to the contract without using safeTransferFrom
     address immutable DEPLOYER;
@@ -92,6 +95,7 @@ contract PlayMyPass is IERC721Receiver {
                 revert PassCurrentlyRented();
             }
         }
+        if(pr.rentalEnd > SEWERS_CLOSING) { revert SewersClosing(); }
 
         processRentalPayment(pd.passOwner, uint256(pd.hourlyRentalPrice), rentalHours); // pay pass owner
         rentalData[passId] = pr; // update state
@@ -108,7 +112,7 @@ contract PlayMyPass is IERC721Receiver {
         if(!pd.purchaseAllowed) { revert PassNotAvailable(); } // revert if pass purchase is disabled
         PassRental memory pr = rentalData[passId]; // load current rental data
 
-        if(pr.renter != msg.sender && pr.rentalEnd < block.timestamp) { revert PassCurrentlyRented(); } // if currently rented, only current renter can purchase
+        if(pr.renter != msg.sender && pr.rentalEnd > block.timestamp) { revert PassCurrentlyRented(); } // if currently rented, only current renter can purchase
         if(pr.renter != address(0)) { //clean up delegations
             delegateCash.delegateForToken(pr.renter, SEWER_PASS, passId, false);
         }
@@ -146,9 +150,11 @@ contract PlayMyPass is IERC721Receiver {
     /**
      * @notice Send rental and purchase payments to pass owner, subtracts 10% FEE
      * @param passOwner the address of the pass holder to send payment to
+     * @param price the total cost for the transaction
      */
     function payPassOwner(address passOwner, uint256 price) internal {
-        uint256 payment = price * FEE / 100;
+        uint256 providerFee = price * FEE / 100;
+        uint256 payment = price - providerFee;
         (bool sent, ) = payable(passOwner).call{value: payment}("");
         require(sent);
     }
@@ -265,15 +271,7 @@ contract PlayMyPass is IERC721Receiver {
      * @notice Withdraws fees collected
      */
     function withdraw() external {
-        uint256 balance = address(this).balance;
-        uint256 justadev = balance * 25 / 100;
-        uint256 layerrxyz = balance * 25 / 100;
-        uint256 joshong = balance * 25 / 100;
-        uint256 pat = balance - justadev - layerrxyz - joshong;
-        payable(JOSHONG).transfer(joshong);
-        payable(JUSTADEV).transfer(justadev);
-        payable(LAYERRXYZ).transfer(layerrxyz);
-        payable(PAT).transfer(pat);
+        payable(FEE_SPLITTER).transfer(address(this).balance);
     }
     
 
@@ -296,10 +294,14 @@ contract PlayMyPass is IERC721Receiver {
         PassData[] memory tmpPasses = new PassData[](1000);
         uint256[] memory tmpTokenIds = this.sewerpassTokenIds(address(this));
         uint256 tmpIndex = 0;
+        uint256 passTier;
 
         for(uint256 index = 0;index < tmpTokenIds.length;index++) {
             if(passData[tmpTokenIds[index]].rentalAllowed && rentalData[tmpTokenIds[index]].rentalEnd < block.timestamp) {
                 tmpPasses[tmpIndex] = passData[tmpTokenIds[index]];
+                (passTier,,) = IBAYCSewerPass(SEWER_PASS).getMintDataByTokenId(tmpTokenIds[index]);
+                tmpPasses[tmpIndex].boredPass = (passTier > 2);
+                tmpPasses[tmpIndex].dogPass = (passTier % 2 == 0);
                 tmpIndex++;
             }
         }
@@ -318,10 +320,14 @@ contract PlayMyPass is IERC721Receiver {
         PassData[] memory tmpPasses = new PassData[](1000);
         uint256[] memory tmpTokenIds = this.sewerpassTokenIds(address(this));
         uint256 tmpIndex = 0;
+        uint256 passTier;
 
         for(uint256 index = 0;index < tmpTokenIds.length;index++) {
             if(isOwnerOrDelegate(owner, tmpTokenIds[index])) {
                 tmpPasses[tmpIndex] = passData[tmpTokenIds[index]];
+                (passTier,,) = IBAYCSewerPass(SEWER_PASS).getMintDataByTokenId(tmpTokenIds[index]);
+                tmpPasses[tmpIndex].boredPass = (passTier > 2);
+                tmpPasses[tmpIndex].dogPass = (passTier % 2 == 0);
                 tmpIndex++;
             }
         }
@@ -340,12 +346,16 @@ contract PlayMyPass is IERC721Receiver {
         PassRental[] memory tmpRentals = new PassRental[](1000);
         uint256[] memory tmpTokenIds = this.sewerpassTokenIds(address(this));
         uint256 tmpIndex = 0;
+        uint256 passTier;
 
         for(uint256 index = 0;index < tmpTokenIds.length;index++) {
             if(rentalData[tmpTokenIds[index]].rentalEnd >= block.timestamp && isOwnerOrDelegate(owner, tmpTokenIds[index])) {
                 tmpRentals[tmpIndex] = rentalData[tmpTokenIds[index]];
                 tmpRentals[tmpIndex].hourlyRentalPrice = passData[tmpTokenIds[index]].hourlyRentalPrice;
                 tmpRentals[tmpIndex].cannotExtend = !passData[tmpTokenIds[index]].rentalAllowed;
+                (passTier,,) = IBAYCSewerPass(SEWER_PASS).getMintDataByTokenId(tmpTokenIds[index]);
+                tmpRentals[tmpIndex].boredPass = (passTier > 2);
+                tmpRentals[tmpIndex].dogPass = (passTier % 2 == 0);
                 tmpIndex++;
             }
         }
@@ -364,12 +374,16 @@ contract PlayMyPass is IERC721Receiver {
         PassRental[] memory tmpRentals = new PassRental[](1000);
         uint256[] memory tmpTokenIds = this.sewerpassTokenIds(address(this));
         uint256 tmpIndex = 0;
+        uint256 passTier;
 
         for(uint256 index = 0;index < tmpTokenIds.length;index++) {
             if(rentalData[tmpTokenIds[index]].rentalEnd >= block.timestamp && rentalData[tmpTokenIds[index]].renter == renter) {
                 tmpRentals[tmpIndex] = rentalData[tmpTokenIds[index]];
                 tmpRentals[tmpIndex].hourlyRentalPrice = passData[tmpTokenIds[index]].hourlyRentalPrice;
                 tmpRentals[tmpIndex].cannotExtend = !passData[tmpTokenIds[index]].rentalAllowed;
+                (passTier,,) = IBAYCSewerPass(SEWER_PASS).getMintDataByTokenId(tmpTokenIds[index]);
+                tmpRentals[tmpIndex].boredPass = (passTier > 2);
+                tmpRentals[tmpIndex].dogPass = (passTier % 2 == 0);
                 tmpIndex++;
             }
         }
