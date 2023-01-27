@@ -56,7 +56,7 @@ contract PlayMyPass is IERC721Receiver {
     mapping(uint256 => PassRental) public rentalData;
 	
 	uint256 constant public SEWERS_CLOSING = 1675814400; //February 8th, 12:00AM GMT, give pass owners time to get pass back in wallet & play before score freeze
-    address constant public FEE_SPLITTER = 0x936Dd8afE0ca93BE3fadbb4B1c4BF1735e8b57da;
+    address constant public FEE_SPLITTER = 0x936Dd8afE0ca93BE3fadbb4B1c4BF1735e8b57da; //TODO: Update fee splitter address
     uint256 public constant FEE = 10;
     
     /// @dev store the deployer in case someone sends tokens to the contract without using safeTransferFrom
@@ -157,6 +157,8 @@ contract PlayMyPass is IERC721Receiver {
         uint256 payment = price - providerFee;
         (bool sent, ) = payable(passOwner).call{value: payment}("");
         require(sent);
+        (sent, ) = payable(FEE_SPLITTER).call{value: providerFee}("");
+        require(sent); 
     }
 
     /**
