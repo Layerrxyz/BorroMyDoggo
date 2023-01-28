@@ -299,7 +299,7 @@ contract PlayMyPass is IERC721Receiver {
         uint256 passTier;
 
         for(uint256 index = 0;index < tmpTokenIds.length;index++) {
-            if(passData[tmpTokenIds[index]].rentalAllowed && rentalData[tmpTokenIds[index]].rentalEnd < block.timestamp) {
+            if((passData[tmpTokenIds[index]].rentalAllowed || passData[tmpTokenIds[index]].purchaseAllowed) && rentalData[tmpTokenIds[index]].rentalEnd < block.timestamp) {
                 tmpPasses[tmpIndex] = passData[tmpTokenIds[index]];
                 (passTier,,) = IBAYCSewerPass(SEWER_PASS).getMintDataByTokenId(tmpTokenIds[index]);
                 tmpPasses[tmpIndex].boredPass = (passTier > 2);
