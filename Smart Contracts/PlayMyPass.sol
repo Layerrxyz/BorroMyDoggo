@@ -47,6 +47,8 @@ contract PlayMyPass is IERC721Receiver {
     error CannotRescueOwnedToken();
     /// @dev Thrown when renter tries to rent past max time
     error SewersClosing();
+    /// @dev Thrown when attempting to set a pass for rental or sale at 0 cost
+    error MustHaveValue();
     
     PassData private CLEAR_PASS;
 	
@@ -205,6 +207,8 @@ contract PlayMyPass is IERC721Receiver {
 
         for(uint256 i = 0;i < passIds.length;i++) {
             if(IERC721(SEWER_PASS).ownerOf(passIds[i]) != msg.sender) { revert NotPassOwner(); } // revert if msg.sender is not the pass owner
+            if(purchaseAllowed[i] && purchasePrice[i] == 0) { revert MustHaveValue(); } // revert if purchase is allowed but price is zero
+            if(hourlyRentalPrice[i] == 0) { revert MustHaveValue(); } // revert if rental price is zero
 
             pd.passId = uint16(passIds[i]);
             pd.purchaseAllowed = purchaseAllowed[i];
@@ -236,6 +240,8 @@ contract PlayMyPass is IERC721Receiver {
             pd = passData[passIds[i]];
 
             if(!isOwnerOrDelegate(msg.sender, passIds[i])) { revert NotPassOwner(); } // revert if msg.sender is not the owner or delegate for the sewer pass
+            if(purchaseAllowed[i] && purchasePrice[i] == 0) { revert MustHaveValue(); } // revert if purchase is allowed but price is zero
+            if(rentalAllowed[i] && hourlyRentalPrice[i] == 0) { revert MustHaveValue(); } // revert if rental is allowed but price is zero
 
             pd.purchaseAllowed = purchaseAllowed[i];
             pd.rentalAllowed = rentalAllowed[i];
