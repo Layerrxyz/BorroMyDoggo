@@ -33,6 +33,20 @@ export const StyledButton = styled.button`
   height: 60px;
   cursor: pointer;
 `;
+export const StyledPassButton = styled.button`
+  padding: 10px;
+  border-radius: 15px;
+  border: none;
+  background-color: var(--secondary);
+  padding: 5px 10px 5px 10px;
+  margin: 10px;
+  font-size: 20px;
+  font-family: "CloneRounded";
+  color: var(--secondary-text);
+  width: 150px;
+  height: 60px;
+  cursor: pointer;
+`;
 export const NavButton = styled.button`
   padding: 10px;
   border-radius: 15px;
@@ -1383,9 +1397,9 @@ function App() {
                                             <s.Container ai={"center"} jc={"center"}
                                               style={{ padding: "10px", margin: "5px", backgroundColor: rentPassIds[obj.passId] && (currentPassMode == PassMode.Rent) ? "#33AA55FF" : "#FFFFFF00", borderRadius: "10px", }}
                                               onClick={(e) => { toggleRentPassId(obj.passId,PassMode.Rent,true); }}>
-                                              <StyledButton>
-                                                PASS #{obj.passId} - TIER {((obj.boredPass ? 3 : 1) + (obj.dogPass ? 1 : 0))}
-                                              </StyledButton>
+                                              <StyledPassButton>
+                                                PASS #{obj.passId}<br />TIER {((obj.boredPass ? 3 : 1) + (obj.dogPass ? 1 : 0))}
+                                              </StyledPassButton>
                                               <s.SpacerSmall />
                                               { obj.rentalAllowed ? 
                                                 <>
@@ -1440,9 +1454,9 @@ function App() {
                                             <s.Container ai={"center"} jc={"center"}
                                               style={{ padding: "10px", margin: "5px", backgroundColor: rentPassIds[obj.passId] && (currentPassMode == PassMode.Extend) ? "#33AA55FF" : "#FFFFFF00", borderRadius: "10px", }}
                                               onClick={(e) => { toggleRentPassId(obj.passId,PassMode.Extend,true); }}>
-                                              <StyledButton>
-                                                PASS #{obj.passId} - TIER {((obj.boredPass ? 3 : 1) + (obj.dogPass ? 1 : 0))}
-                                              </StyledButton>
+                                              <StyledPassButton>
+                                                PASS #{obj.passId}<br />TIER {((obj.boredPass ? 3 : 1) + (obj.dogPass ? 1 : 0))}
+                                              </StyledPassButton>
                                               <s.SpacerSmall />
                                               <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
                                                 EXPIRES: {(new Date(parseInt(obj.rentalEnd)*1000)).toLocaleString('en-US')}
@@ -1489,9 +1503,9 @@ function App() {
                                             <s.Container ai={"center"} jc={"center"}
                                               style={{ padding: "10px", margin: "5px", backgroundColor: rentPassIds[obj.passId] && (currentPassMode == PassMode.Update) ? "#33AA55FF" : "#FFFFFF00", borderRadius: "10px", }}
                                               onClick={(e) => { toggleRentPassId(obj.passId,PassMode.Update,false); }}>
-                                              <StyledButton>
-                                                PASS #{obj.passId} - TIER {((obj.boredPass ? 3 : 1) + (obj.dogPass ? 1 : 0))}
-                                              </StyledButton>
+                                              <StyledPassButton>
+                                                PASS #{obj.passId}<br />TIER {((obj.boredPass ? 3 : 1) + (obj.dogPass ? 1 : 0))}
+                                              </StyledPassButton>
                                               { obj.rentalAllowed ? 
                                                 <>
                                                   <s.SpacerSmall />
@@ -1546,9 +1560,9 @@ function App() {
                                             <s.Container ai={"center"} jc={"center"}
                                               style={{ padding: "10px", margin: "5px", backgroundColor: rentPassIds[obj] && (currentPassMode == PassMode.Deposit) ? "#33AA55FF" : "#FFFFFF00", borderRadius: "10px", }}
                                               onClick={(e) => { toggleRentPassId(obj,PassMode.Deposit,false); }}>
-                                              <StyledButton>
-                                                PASS #{obj} - TIER {pass.spTokenTiers[obj]}
-                                              </StyledButton>
+                                              <StyledPassButton>
+                                                PASS #{obj}<br />TIER {pass.spTokenTiers[obj]}
+                                              </StyledPassButton>
                                             </s.Container>
                                           ))}
                                       </>
