@@ -7,6 +7,7 @@ import Web3Modal from "web3modal";
 
 // log
 import { fetchDog } from "../dog/dogActions";
+import { fetchPass } from "../pass/passActions";
 
 const RPC_URL = "https://eth-mainnet.g.alchemy.com/v2/Zyfm8OYrhexi56ZPlS8Oq7hfTWLrNZ-M";
 
@@ -153,6 +154,7 @@ export const lightConnect = () => {
             })
           );
           dispatch(fetchDog());
+          dispatch(fetchPass());
       } catch (err) {
         dispatch(connectFailed("Something went wrong."));
       }

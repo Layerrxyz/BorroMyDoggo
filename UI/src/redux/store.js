@@ -3,11 +3,13 @@ import thunk from "redux-thunk";
 import blockchainReducer from "./blockchain/blockchainReducer";
 import dogReducer from "./dog/dogReducer";
 import statsReducer from "./stats/statsReducer";
+import passReducer from "./pass/passReducer";
 
 const rootReducer = combineReducers({
   blockchain: blockchainReducer,
   dog: dogReducer,
-  stats: statsReducer
+  stats: statsReducer,
+  pass: passReducer
 });
 
 const middleware = [thunk];

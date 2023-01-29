@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { connect, lightConnect } from "./redux/blockchain/blockchainActions";
 import { fetchDog } from "./redux/dog/dogActions";
 import { fetchStats } from "./redux/stats/statsActions";
+import { fetchPass } from "./redux/pass/passActions";
 import * as s from "./styles/globalStyles";
 import styled from "styled-components";
 import Web3 from "web3";
@@ -103,6 +104,7 @@ function App() {
   const dispatch = useDispatch();
   const blockchain = useSelector((state) => state.blockchain);
   const dog = useSelector((state) => state.dog);
+  const pass = useSelector((state) => state.pass);
   const stats = useSelector((state) => state.stats);
   const [currentPage, setCurrentPage] = useState('BUY');
   const [txPending, setTXPending] = useState(false);
@@ -112,11 +114,25 @@ function App() {
   const [baycIds, setBaycIds] = useState(new Array(10000).fill(false));
   const [maycIds, setMaycIds] = useState(new Array(40000).fill(false));
   const [dogIds, setDogIds] = useState(new Array(10000).fill(false));
+  const [rentPassIds, setRentPassIds] = useState(new Array(30000).fill(false));
+  const [currentPassIdToRent, setCurrentPassIdToRent] = useState(-1);
+  const [passCostToPurchase, setPassCostToPurchase] = useState(0);
+  const [passCostToRent, setPassCostToRent] = useState(0);
+  const [passPurchaseAllowed, setPassPurchaseAllowed] = useState(false);
+  const [passRentalAllowed, setPassRentalAllowed] = useState(false);
+  const [currentPassPurchaseAllowed, setCurrentPassPurchaseAllowed] = useState(false);
+  const [currentPassRentalAllowed, setCurrentPassRentalAllowed] = useState(false);
+  const [currentPassPurchaseCost, setCurrentPassPurchaseCost] = useState(0);
+  const [currentPassRentalCost, setCurrentPassRentalCost] = useState(0);
+  const [currentPassRentalHours, setCurrentPassRentalHours] = useState(0);
+  const [currentPassRentalCostTotal, setCurrentPassRentalCostTotal] = useState(0);
+  const [currentPassMode, setCurrentPassMode] = useState(-1);
   const [CONFIG, SET_CONFIG] = useState({
     RENTADOG_CONTRACT_ADDRESS: "0xb0bFF1a7D2Eb226f2DEBfA89F28A543c0a645D9c",
     HELPER_CONTRACT_ADDRESS: "0x81311e6cdDEF848ea32190a903F7d904faB4B6A2",
-    PLAY_MY_PASS_CONTRACT_ADDRESS: "0xa410AB313da9397f0d3Cabbc56eb61B08e5Ad49D",
+    PLAY_MY_PASS_CONTRACT_ADDRESS: "0x2FEdf7c571544d1c04F9c4643082d01a2c81C2f1",
     DELEGATE_CASH_CONTRACT_ADDRESS: "0x00000000000076A84feF008CDAbe6409d2FE638B",
+    SEWER_PASS_CONTRACT_ADDRESS: "0x764AeebcF425d56800eF2c84F2578689415a2DAa",
     NETWORK: {
       NAME: "Ethereum",
       SYMBOL: "ETH",
@@ -124,6 +140,14 @@ function App() {
     },
     SHOW_BACKGROUND: true,
   });
+
+  const PassMode = {
+    Rent:  1,
+    Deposit: 2,
+    Update: 3,
+    Withdraw: 4,
+    Extend: 5
+  };
 
   const params = new URLSearchParams(location.search);
   const ref = params.get("ref");
@@ -234,7 +258,7 @@ function App() {
       blockchain.delegatecashContract.methods
         .delegateForAll(CONFIG.RENTADOG_CONTRACT_ADDRESS, true)
         .send({
-          to: CONFIG.DELEGATE_CASh_CONTRACT_ADDRESS,
+          to: CONFIG.DELEGATE_CASH_CONTRACT_ADDRESS,
           from: blockchain.account,
         })
         .once("error", (err) => {
@@ -255,14 +279,14 @@ function App() {
     }
   };
 
-  const playOurPass = () => {
-    setFeedback("DELEGATING ACCESS...");
+  const approveRMP = () => {
+    setFeedback("SETTING APPROVAL...");
     setTXPending(true);
     try {
-      blockchain.playmypassContract.methods
-        .delegateMe()
+      blockchain.sewerpassContract.methods
+        .setApprovalForAll(CONFIG.PLAY_MY_PASS_CONTRACT_ADDRESS, true)
         .send({
-          to: CONFIG.PLAY_MY_PASS_CONTRACT_ADDRESS,
+          to: CONFIG.SEWER_PASS_CONTRACT_ADDRESS,
           from: blockchain.account,
         })
         .once("error", (err) => {
@@ -272,9 +296,9 @@ function App() {
         })
         .then((receipt) => {
           console.log(receipt);
-          setFeedback(`YOUR WALLET IS SETUP TO PLAY WITH OUR PASS`);
+          setFeedback(`YOUR WALLET IS APPROVED`);
           setTXPending(false);
-          dispatch(fetchDog(blockchain.account));
+          dispatch(fetchPass(blockchain.account));
         });
     } catch (err) {
       console.log(err);
@@ -343,6 +367,287 @@ function App() {
     }
   };
 
+  const updatePasses = () => {
+    let rentCostGWEI = 0;
+    let purchaseCostGWEI = 0;
+    try {
+      rentCostGWEI = Web3.utils.fromWei(Web3.utils.toWei(passCostToRent), 'gwei');
+      purchaseCostGWEI =Web3.utils.fromWei(Web3.utils.toWei(passCostToPurchase), 'gwei');
+    } catch (err) {}
+    setFeedback("UPDATING PASS RENTALS");
+    setTXPending(true);
+    let passIdsToUpdate = [];
+    let purchasesAllowed = [];
+    let rentalsAllowed = [];
+    let purchasePrices = [];
+    let rentalPrices = [];
+    for (let i = 0; i < pass.myPassesForRent.length; i++) {
+      if (rentPassIds[pass.myPassesForRent[i].passId]) {
+        passIdsToUpdate.push(pass.myPassesForRent[i].passId);
+      }
+    }
+    if (passIdsToUpdate.length == 0) {
+      setFeedback("NOTHING SELECTED");
+      setTXPending(false);
+      return;
+    }
+    if (rentCostGWEI == 0 && passRentalAllowed) {
+      setFeedback("COST TO RENT MUST BE > 0");
+      setTXPending(false);
+      return;
+    }
+    if (purchaseCostGWEI == 0 && passPurchaseAllowed) {
+      setFeedback("COST TO PURCHASE MUST BE > 0");
+      setTXPending(false);
+      return;
+    }
+    for(let i = 0;i < passIdsToUpdate.length;i++) {
+      purchasesAllowed.push(passPurchaseAllowed);
+      rentalsAllowed.push(passRentalAllowed);
+      purchasePrices.push(purchaseCostGWEI);
+      rentalPrices.push(rentCostGWEI);
+    }
+    try {
+      blockchain.playmypassContract.methods
+        .updatePasses(passIdsToUpdate, purchasesAllowed, rentalsAllowed, purchasePrices, rentalPrices)
+        .send({
+          to: CONFIG.PLAY_MY_PASS_CONTRACT_ADDRESS,
+          from: blockchain.account,
+        })
+        .once("error", (err) => {
+          console.log(err);
+          setFeedback("SORRY, SOMETHING WENT WRONG");
+          setTXPending(false);
+        })
+        .then((receipt) => {
+          console.log(receipt);
+          setFeedback(`PASSES UPDATED`);
+          setTXPending(false);
+          dispatch(fetchPass(blockchain.account));
+          resetSelections();
+        });
+    } catch (err) {
+      console.log(err);
+      setFeedback("SORRY, SOMETHING WENT WRONG");
+      setTXPending(false);
+    }
+  };
+
+  const depositPasses = () => {
+    let rentCostGWEI = 0;
+    let purchaseCostGWEI = 0;
+    try {
+      rentCostGWEI = Web3.utils.fromWei(Web3.utils.toWei(passCostToRent), 'gwei');
+      purchaseCostGWEI =Web3.utils.fromWei(Web3.utils.toWei(passCostToPurchase), 'gwei');
+    } catch (err) {}
+    setFeedback("DEPOSITING PASSES");
+    setTXPending(true);
+    let passIdsToDeposit = [];
+    let purchasesAllowed = [];
+    let purchasePrices = [];
+    let rentalPrices = [];
+    for (let i = 0; i < pass.spTokens.length; i++) {
+      if (rentPassIds[pass.spTokens[i]]) {
+        passIdsToDeposit.push(pass.spTokens[i]);
+      }
+    }
+    if (passIdsToDeposit.length == 0) {
+      setFeedback("NOTHING SELECTED");
+      setTXPending(false);
+      return;
+    }
+    if (rentCostGWEI == 0) {
+      setFeedback("COST TO RENT MUST BE > 0");
+      setTXPending(false);
+      return;
+    }
+    if (purchaseCostGWEI == 0 && passPurchaseAllowed) {
+      setFeedback("COST TO PURCHASE MUST BE > 0");
+      setTXPending(false);
+      return;
+    }
+    for(let i = 0;i < passIdsToDeposit.length;i++) {
+      purchasesAllowed.push(passPurchaseAllowed);
+      purchasePrices.push(purchaseCostGWEI);
+      rentalPrices.push(rentCostGWEI);
+    }
+    try {
+      blockchain.playmypassContract.methods
+        .depositPasses(passIdsToDeposit, purchasesAllowed, purchasePrices, rentalPrices)
+        .send({
+          to: CONFIG.PLAY_MY_PASS_CONTRACT_ADDRESS,
+          from: blockchain.account,
+        })
+        .once("error", (err) => {
+          console.log(err);
+          setFeedback("SORRY, SOMETHING WENT WRONG");
+          setTXPending(false);
+        })
+        .then((receipt) => {
+          console.log(receipt);
+          setFeedback(`PASSES DEPOSITED`);
+          setTXPending(false);
+          dispatch(fetchPass(blockchain.account));
+          resetSelections();
+        });
+    } catch (err) {
+      console.log(err);
+      setFeedback("SORRY, SOMETHING WENT WRONG");
+      setTXPending(false);
+    }
+  };
+
+  const withdrawPasses = () => {
+    setFeedback("WITHDRAWING PASSES");
+    setTXPending(true);
+    let passIdsToWithdraw = [];
+    let currentlyRentedCount = 0;
+    for (let i = 0; i < pass.myPassesForRent.length; i++) {
+      if (rentPassIds[pass.myPassesForRent[i].passId]) {
+        let passIsRented = false;
+        for(let j = 0;j < pass.myPassesRented.length;j++) {
+          if(pass.myPassesForRent[i].passId == pass.myPassesRented[j].passId) {
+            currentlyRentedCount++;
+            passIsRented = true;
+            break;
+          }
+        }
+        if(!passIsRented) {
+          passIdsToWithdraw.push(pass.myPassesForRent[i].passId);
+        }
+      }
+    }
+    if (passIdsToWithdraw.length == 0 && currentlyRentedCount == 0) {
+      setFeedback("NOTHING SELECTED");
+      setTXPending(false);
+      return;
+    }
+    if(currentlyRentedCount > 0) {
+      setFeedback("WITHDRAWING UNRENTED PASSES");
+    }
+    try {
+      blockchain.playmypassContract.methods
+        .withdrawPasses(passIdsToWithdraw)
+        .send({
+          to: CONFIG.PLAY_MY_PASS_CONTRACT_ADDRESS,
+          from: blockchain.account,
+        })
+        .once("error", (err) => {
+          console.log(err);
+          setFeedback("SORRY, SOMETHING WENT WRONG");
+          setTXPending(false);
+        })
+        .then((receipt) => {
+          console.log(receipt);
+          setFeedback(`PASSES WITHDRAWN`);
+          setTXPending(false);
+          dispatch(fetchPass(blockchain.account));
+          resetSelections();
+        });
+    } catch (err) {
+      console.log(err);
+      setFeedback("SORRY, SOMETHING WENT WRONG");
+      setTXPending(false);
+    }
+  };
+
+  const rentPass = () => {
+    setFeedback("RENTING PASS");
+    setTXPending(true);
+
+    let rentalCostWEI = 0;
+    try {
+      rentalCostWEI = Web3.utils.toWei(currentPassRentalCostTotal.toString(), 'gwei');
+    } catch(err) {}
+
+    if(currentPassIdToRent == -1) {
+      setFeedback("NO PASS SELECTED");
+      setTXPending(false);
+      return;
+    }
+    if(currentPassRentalHours == 0) {
+      setFeedback("RENTAL HOURS MUST BE > 0");
+      setTXPending(false);
+      return;
+    }
+    if (rentalCostWEI == 0) {
+      setFeedback("INVALID RENTAL COST");
+      setTXPending(false);
+      return;
+    }
+    try {
+      blockchain.playmypassContract.methods
+        .rentPass(currentPassIdToRent, currentPassRentalHours)
+        .send({
+          to: CONFIG.PLAY_MY_PASS_CONTRACT_ADDRESS,
+          from: blockchain.account,
+          value: rentalCostWEI
+        })
+        .once("error", (err) => {
+          console.log(err);
+          setFeedback("SORRY, SOMETHING WENT WRONG");
+          setTXPending(false);
+        })
+        .then((receipt) => {
+          console.log(receipt);
+          setFeedback(`PASS RENTED - GO PLAY SOME DOOKEY!`);
+          setTXPending(false);
+          dispatch(fetchPass(blockchain.account));
+          resetSelections();
+        });
+    } catch (err) {
+      console.log(err);
+      setFeedback("SORRY, SOMETHING WENT WRONG");
+      setTXPending(false);
+    }
+  };
+
+  const purchasePass = () => {
+    setFeedback("PURCHASING PASS");
+    setTXPending(true);
+
+    let purchaseCostWEI = 0;
+    try {
+      purchaseCostWEI = Web3.utils.toWei(currentPassPurchaseCost.toString(), 'gwei');
+    } catch(err) {}
+
+    if(currentPassIdToRent == -1) {
+      setFeedback("NO PASS SELECTED");
+      setTXPending(false);
+      return;
+    }
+    if (purchaseCostWEI == 0) {
+      setFeedback("INVALID PURCHASE COST");
+      setTXPending(false);
+      return;
+    }
+    try {
+      blockchain.playmypassContract.methods
+        .purchasePass(currentPassIdToRent)
+        .send({
+          to: CONFIG.PLAY_MY_PASS_CONTRACT_ADDRESS,
+          from: blockchain.account,
+          value: purchaseCostWEI
+        })
+        .once("error", (err) => {
+          console.log(err);
+          setFeedback("SORRY, SOMETHING WENT WRONG");
+          setTXPending(false);
+        })
+        .then((receipt) => {
+          console.log(receipt);
+          setFeedback(`PASS PURCHASED - GO PLAY SOME DOOKEY!`);
+          setTXPending(false);
+          dispatch(fetchPass(blockchain.account));
+          resetSelections();
+        });
+    } catch (err) {
+      console.log(err);
+      setFeedback("SORRY, SOMETHING WENT WRONG");
+      setTXPending(false);
+    }
+  };
+
   const toggleDogId = (position) => {
     position = parseInt(position);
     const updateTokens = dogIds.map((item, index) =>
@@ -376,13 +681,72 @@ function App() {
     setMaycIds(updateTokens);
   };
 
+  const toggleRentPassId = (position, passMode, singlePass = false) => {
+    let passId = parseInt(position);
+    const updateTokens = rentPassIds.map((item, index) =>
+      index === passId ? !item : (singlePass ? false : item)
+    );
+    setRentPassIds(updateTokens);
+
+    if(passMode == PassMode.Rent) {
+      setCurrentPassIdToRent((updateTokens[passId] ? passId : -1));
+      for(let i = 0;i < pass.availableToRent.length;i++) {
+        if(parseInt(pass.availableToRent[i].passId) == passId) {
+          setCurrentPassPurchaseAllowed(pass.availableToRent[i].purchaseAllowed);
+          setCurrentPassRentalAllowed(pass.availableToRent[i].rentalAllowed);
+          setCurrentPassPurchaseCost(parseInt(pass.availableToRent[i].purchasePrice));
+          setCurrentPassRentalCost(parseInt(pass.availableToRent[i].hourlyRentalPrice));
+          setCurrentPassRentalCostTotal(parseInt(pass.availableToRent[i].hourlyRentalPrice) * currentPassRentalHours);
+          break;
+        }
+      }
+    } else if(passMode == PassMode.Extend) {
+      setCurrentPassIdToRent((updateTokens[passId] ? passId : -1));
+      for(let i = 0;i < pass.myRentals.length;i++) {
+        if(parseInt(pass.myRentals[i].passId) == passId) {
+          setCurrentPassRentalAllowed(!pass.myRentals[i].cannotExtend);
+          setCurrentPassRentalCost(parseInt(pass.myRentals[i].hourlyRentalPrice));
+          setCurrentPassRentalCostTotal(parseInt(pass.myRentals[i].hourlyRentalPrice) * currentPassRentalHours);
+          break;
+        }
+      }
+      setCurrentPassPurchaseAllowed(pass.rentalPurchasePrice[position].purchaseAllowed);
+      setCurrentPassPurchaseCost(parseInt(pass.rentalPurchasePrice[position].purchasePrice));
+    } else {
+      setCurrentPassIdToRent(-1);
+    }
+    setCurrentPassMode(passMode);
+  };
+
   const resetSelections = () => {
     setDogIds(new Array(10000).fill(false));
     setBaycIds(new Array(10000).fill(false));
     setMaycIds(new Array(40000).fill(false));
+    setRentPassIds(new Array(30000).fill(false));
     setTotalCostToRent(0);
     setCostToRent(0);
+    setCurrentPassIdToRent(-1);
+    setCurrentPassPurchaseAllowed(false);
+    setCurrentPassRentalAllowed(false);
+    setCurrentPassPurchaseCost(0);
+    setCurrentPassRentalCost(0);
+    setCurrentPassRentalCostTotal(0);
+    setCurrentPassRentalHours(0);
     setFeedback("");
+  };
+
+  const isRented = (passId) => {
+    for (let i = 0; i < pass.myPassesRented.length; i++) {
+      if(passId === pass.myPassesRented[i].passId) { return true; }
+    }
+    return false;
+  };
+
+  const myPassRentalEnd = (passId) => {
+    for (let i = 0; i < pass.myPassesRented.length; i++) {
+      if(passId === pass.myPassesRented[i].passId) { return parseInt(pass.myPassesRented[i].rentalEnd); }
+    }
+    return 0;
   };
 
   const getCurrentCost = (dogId) => {
@@ -403,6 +767,15 @@ function App() {
     }
   };
 
+  const getPasses = () => {
+    if (blockchain.account !== "" && blockchain.playmypassContract !== null) {
+      resetSelections();
+      dispatch(fetchPass(blockchain.account));
+    } else if(blockchain.account == "" && blockchain.playmypassContract !== null) {
+      dispatch(fetchPass());
+    }
+  };
+
   const getStats = () => {
     dispatch(fetchStats());
   };
@@ -411,6 +784,28 @@ function App() {
     const cost = e.target.value;
     if (!cost || cost.match(/^\d{1,}(\.\d{0,4})?$/)) {
       setCostToRent(cost);
+    }
+  };
+
+  const updatePassRentCost = (e) => {
+    const cost = e.target.value;
+    if (!cost || cost.match(/^\d{1,}(\.\d{0,4})?$/)) {
+      setPassCostToRent(cost);
+    }
+  };
+
+  const updatePassPurchaseCost = (e) => {
+    const cost = e.target.value;
+    if (!cost || cost.match(/^\d{1,}(\.\d{0,4})?$/)) {
+      setPassCostToPurchase(cost);
+    }
+  };
+
+  const updatePassRentHours = (e) => {
+    const hours = e.target.value;
+    if (!hours || hours.match(/^\d+$/)) {
+      setCurrentPassRentalHours(hours);
+      setCurrentPassRentalCostTotal(currentPassRentalCost * hours);
     }
   };
 
@@ -458,6 +853,7 @@ function App() {
       if (ref) signReferral(ref);
     }
     getDogs();
+    getPasses();
   }, [blockchain.account]);
 
   useEffect(() => {}, [currentPage]);
@@ -522,6 +918,7 @@ function App() {
             </div>
           </LogoContainer>
 
+          { currentPage == "BUY" || currentPage == "SELL" ?
           <LogoContainer>
             <s.TextTitle>
               Contracts audited by
@@ -529,6 +926,7 @@ function App() {
               <a href="https://boringsecurity.com"> @BoringSecDAO</a>
             </s.TextTitle>
           </LogoContainer>
+          : null}
 
           <NavContainer>
             <NavButton
@@ -557,7 +955,7 @@ function App() {
             >
               SELL BOOSTS
             </NavButton>
-            { false ? 
+            { true ? 
             <NavButton
               onClick={() => {
                 resetSelections();
@@ -569,10 +967,10 @@ function App() {
                   : "var(--nav-button)",
               }}
             >
-              PLAY OUR PASS
+              PASS RENTAL
             </NavButton>
             : null }
-            <NavButton onClick={() => { getStats(); getDogs(); }} style={{ backgroundColor: "var(--nav-button)" }} >
+            <NavButton onClick={() => { if(currentPage == "BUY" || currentPage == "SELL") { getStats(); getDogs(); } else { getPasses(); } }} style={{ backgroundColor: "var(--nav-button)" }} >
               REFRESH
             </NavButton>
           </NavContainer>
@@ -956,23 +1354,11 @@ function App() {
                     ),
                     "PLAY": (
                       <>
-                        {dog.loading ? (
+                        {pass.loading ? (
                           <>
-                            <s.Container
-                              ai={"center"}
-                              jc={"center"}
-                              fd={"column"}
-                              fw={"wrap"}
-                            >
-                              <s.Container
-                                ai={"center"}
-                                jc={"center"}
-                                fd={"row"}
-                                fw={"wrap"}
-                              >
-                                <s.TextDescription
-                                  style={{ color: "#FFFFFF", fontSize: "30px" }}
-                                >
+                            <s.Container ai={"center"} jc={"center"} fd={"column"} fw={"wrap"}>
+                              <s.Container ai={"center"} jc={"center"} fd={"row"} fw={"wrap"}>
+                                <s.TextDescription style={{ color: "#FFFFFF", fontSize: "30px" }}>
                                   LOADING...
                                 </s.TextDescription>
                               </s.Container>
@@ -980,45 +1366,370 @@ function App() {
                           </>
                         ) : (
                           <>
-                            <s.Container
-                              ai={"center"}
-                              jc={"center"}
-                              fd={"column"}
-                              fw={"wrap"}
-                            >
-                              { dog.playMyPassBalance > 0 ? 
+                          
+                            <s.Container ai={"center"} jc={"center"} fd={"column"} fw={"wrap"}>
+                              {pass.availableToRent.length > 0 ? (
                                 <>
-                              { !dog.playMyPassDelegated ? <>
-                              <s.TextDescription style={{ color: "#FFFFFF", fontSize: "30px", textAlign: "center" }}>
-                                PRESS THE DELEGATE ME BUTTON BELOW TO SET UP YOUR WALLET TO HAVE ACCESS TO OUR SEWER PASSES
-                              </s.TextDescription>
-                              <s.SpacerSmall />
-                              <StyledButton disabled={txPending} onClick={(e) => {e.preventDefault(); playOurPass();}}>
-                                {txPending ? "BUSY" : "DELEGATE ME"}
-                              </StyledButton>
-                                  <s.TextDescription
-                                    style={{
-                                      color: "#FFFFFF",
-                                      fontSize: "30px",
-                                    }}
-                                  >
-                                    {feedback}
+                                  <s.TextDescription style={{ color: "#FFFFFF", fontSize: "40px", textAlign: "center", }}>
+                                    PASSES TO RENT
                                   </s.TextDescription>
-                              </> : <>
-                              <s.TextDescription
-                                style={{ color: "#FFFFFF", fontSize: "30px", textAlign: "center" }}
-                              >
-                                YOU ARE ALL SET, HEAD OVER TO THE DOOKEY DASH WEBSITE TO PLAY!
-                              </s.TextDescription>
-                              </>}</> :
-                                <>
-                                  <s.TextDescription
-                                    style={{ color: "#FFFFFF", fontSize: "30px", textAlign: "center" }}
-                                  >
-                                    NO PASSES CURRENTLY DEPOSITED, PLEASE COME BACK SOON
-                                  </s.TextDescription>
+                                  <s.SpacerMedium />
+                                  <s.Container
+                                    ai={"flex-start"} jc={"center"} fd="row" fw={"wrap"}
+                                    style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }}>
+                                    {pass.availableToRent && pass.availableToRent.length > 0 ? (
+                                      <>
+                                        {pass.availableToRent.map((obj) => (
+                                            <s.Container ai={"center"} jc={"center"}
+                                              style={{ padding: "10px", margin: "5px", backgroundColor: rentPassIds[obj.passId] && (currentPassMode == PassMode.Rent) ? "#33AA55FF" : "#FFFFFF00", borderRadius: "10px", }}
+                                              onClick={(e) => { toggleRentPassId(obj.passId,PassMode.Rent,true); }}>
+                                              <StyledButton>
+                                                PASS #{obj.passId} - TIER {((obj.boredPass ? 3 : 1) + (obj.dogPass ? 1 : 0))}
+                                              </StyledButton>
+                                              <s.SpacerSmall />
+                                              { obj.rentalAllowed ? 
+                                                <>
+                                                  <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
+                                                    RENT: {Math.floor(parseInt(obj.hourlyRentalPrice) / 10**6) / 10**3}E / HR
+                                                  </s.TextDescription>
+                                                </> : null
+                                              }
+                                              { obj.purchaseAllowed ? 
+                                                <>
+                                                  <s.SpacerSmall />
+                                                  <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
+                                                    BUY: {Math.floor(parseInt(obj.purchasePrice) / 10**6) / 10**3}E
+                                                  </s.TextDescription>
+                                                </> : null
+                                              }
+                                            </s.Container>
+                                          ))}
+                                      </>
+                                    ) : (
+                                      <></>
+                                    )}
+                                  </s.Container>
+                                  <s.SpacerMedium />
                                 </>
-                              }
+                              ) : null}
+                              
+                              {pass.myRentals.length > 0 ? (
+                                <>
+                                  <s.TextDescription style={{ color: "#FFFFFF", fontSize: "40px", textAlign: "center", }}>
+                                    MY RENTALS
+                                  </s.TextDescription>
+                                  <s.SpacerMedium />
+                                  <s.Container
+                                    ai={"flex-start"} jc={"center"} fd="row" fw={"wrap"}
+                                    style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }}>
+                                    {pass.myRentals && pass.myRentals.length > 0 ? (
+                                      <>
+                                        {pass.myRentals.map((obj) => (
+                                            <s.Container ai={"center"} jc={"center"}
+                                              style={{ padding: "10px", margin: "5px", backgroundColor: rentPassIds[obj.passId] && (currentPassMode == PassMode.Extend) ? "#33AA55FF" : "#FFFFFF00", borderRadius: "10px", }}
+                                              onClick={(e) => { toggleRentPassId(obj.passId,PassMode.Extend,true); }}>
+                                              <StyledButton>
+                                                PASS #{obj.passId} - TIER {((obj.boredPass ? 3 : 1) + (obj.dogPass ? 1 : 0))}
+                                              </StyledButton>
+                                              <s.SpacerSmall />
+                                              <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
+                                                EXPIRES: {(new Date(parseInt(obj.rentalEnd)*1000)).toLocaleString('en-US')}
+                                              </s.TextDescription>
+                                              <s.SpacerSmall />
+                                              { !obj.cannotExtend ? 
+                                                <>
+                                                  <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
+                                                    EXTEND: {Math.floor(parseInt(obj.hourlyRentalPrice) / 10**6) / 10**3}E / HR
+                                                  </s.TextDescription>
+                                                </> : null
+                                              }
+                                              { pass.rentalPurchasePrice[obj.passId].purchaseAllowed ? 
+                                                <>
+                                                  <s.SpacerSmall />
+                                                  <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
+                                                    BUY: {Math.floor(parseInt(pass.rentalPurchasePrice[obj.passId].purchasePrice) / 10**6) / 10**3}E
+                                                  </s.TextDescription>
+                                                </> : null
+                                              }
+                                            </s.Container>
+                                          ))}
+                                      </>
+                                    ) : (
+                                      <></>
+                                    )}
+                                  </s.Container>
+                                  <s.SpacerMedium />
+                                </>
+                              ) : null}
+                              
+                              {pass.myPassesForRent.length > 0 ? (
+                                <>
+                                  <s.TextDescription style={{ color: "#FFFFFF", fontSize: "40px", textAlign: "center", }}>
+                                    MY PASSES FOR RENT
+                                  </s.TextDescription>
+                                  <s.SpacerMedium />
+                                  <s.Container
+                                    ai={"flex-start"} jc={"center"} fd="row" fw={"wrap"}
+                                    style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }}>
+                                    {pass.myPassesForRent && pass.myPassesForRent.length > 0 ? (
+                                      <>
+                                        {pass.myPassesForRent.map((obj) => (
+                                            <s.Container ai={"center"} jc={"center"}
+                                              style={{ padding: "10px", margin: "5px", backgroundColor: rentPassIds[obj.passId] && (currentPassMode == PassMode.Update) ? "#33AA55FF" : "#FFFFFF00", borderRadius: "10px", }}
+                                              onClick={(e) => { toggleRentPassId(obj.passId,PassMode.Update,false); }}>
+                                              <StyledButton>
+                                                PASS #{obj.passId} - TIER {((obj.boredPass ? 3 : 1) + (obj.dogPass ? 1 : 0))}
+                                              </StyledButton>
+                                              { obj.rentalAllowed ? 
+                                                <>
+                                                  <s.SpacerSmall />
+                                                  <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
+                                                    RENT PRICE: {Math.floor(parseInt(obj.hourlyRentalPrice) / 10**6) / 10**3}E / HR
+                                                  </s.TextDescription>
+                                                </> : null
+                                              }
+                                              { obj.purchaseAllowed ? 
+                                                <>
+                                                  <s.SpacerSmall />
+                                                  <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
+                                                    SELL PRICE: {Math.floor(parseInt(obj.purchasePrice) / 10**6) / 10**3}E
+                                                  </s.TextDescription>
+                                                </> : null
+                                              }
+                                              { isRented(obj.passId) ? 
+                                                <>
+                                                  <s.SpacerSmall />
+                                                  <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
+                                                    PASS ON RENT
+                                                  </s.TextDescription>
+                                                  <s.SpacerSmall />
+                                                  <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
+                                                    EXPIRES: {(new Date(myPassRentalEnd(obj.passId)*1000)).toLocaleString('en-US')}
+                                                  </s.TextDescription>
+                                                </> : null
+                                              }
+                                            </s.Container>
+                                          ))}
+                                      </>
+                                    ) : (
+                                      <></>
+                                    )}
+                                  </s.Container>
+                                  <s.SpacerMedium />
+                                </>
+                              ) : null}
+                              
+                              {pass.spTokens.length > 0 && pass.approvedForAll ? (
+                                <>
+                                  <s.TextDescription style={{ color: "#FFFFFF", fontSize: "40px", textAlign: "center", }}>
+                                    MY PASSES TO DEPOSIT
+                                  </s.TextDescription>
+                                  <s.SpacerMedium />
+                                  <s.Container
+                                    ai={"flex-start"} jc={"center"} fd="row" fw={"wrap"}
+                                    style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }}>
+                                    {pass.spTokens && pass.spTokens.length > 0 ? (
+                                      <>
+                                        {pass.spTokens.map((obj) => (
+                                            <s.Container ai={"center"} jc={"center"}
+                                              style={{ padding: "10px", margin: "5px", backgroundColor: rentPassIds[obj] && (currentPassMode == PassMode.Deposit) ? "#33AA55FF" : "#FFFFFF00", borderRadius: "10px", }}
+                                              onClick={(e) => { toggleRentPassId(obj,PassMode.Deposit,false); }}>
+                                              <StyledButton>
+                                                PASS #{obj} - TIER {pass.spTokenTiers[obj]}
+                                              </StyledButton>
+                                            </s.Container>
+                                          ))}
+                                      </>
+                                    ) : (
+                                      <></>
+                                    )}
+                                  </s.Container>
+                                  <s.SpacerMedium />
+                                </>
+                              ) : null}
+                          
+                              {blockchain.account === "" || blockchain.playmypassContract === null ? (
+                                <>
+                                  <s.SpacerMedium />
+                                  <s.Container ai={"center"} jc={"center"}>
+                                    <s.TextDescription style={{ textAlign: "center", color: "var(--accent-text)", fontSize: "30px", }} >
+                                      Connect to the {CONFIG.NETWORK.NAME} network
+                                    </s.TextDescription>
+                                    <s.SpacerSmall />
+                                    <StyledButton onClick={(e) => { e.preventDefault(); dispatch(connect()); getDogs(); }}>
+                                      CONNECT
+                                    </StyledButton>
+                                    {blockchain.errorMsg !== "" ? (
+                                      <>
+                                        <s.SpacerSmall />
+                                        <s.TextDescription style={{ textAlign: "center", color: "var(--accent-text)", }}>
+                                          {blockchain.errorMsg}
+                                        </s.TextDescription>
+                                      </>
+                                    ) : null}
+                                  </s.Container>
+                                </>
+                                ) : (
+                                  <>
+
+                                    <s.SpacerMedium />
+
+
+                                    { currentPassMode == PassMode.Deposit || currentPassMode == PassMode.Update ? <>
+                                      <s.Container
+                                        ai={"center"} jc={"center"} fd="column" fw={"wrap"}
+                                        style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }} >
+                                        { currentPassMode == PassMode.Update ? <>
+                                          <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                            style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }} >
+                                            <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
+                                              RENT ALLOWED: 
+                                            </s.TextDescription>
+                                            <s.SpacerSmall />
+                                            <input type="checkbox" checked={passRentalAllowed} onChange={() => setPassRentalAllowed(!passRentalAllowed)} style={{height: '20px', width: '20px'}} />
+                                          </s.Container>
+                                        </> : null}
+                                        <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                          style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }} >
+                                          <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
+                                            RENT COST PER HOUR: 
+                                          </s.TextDescription>
+                                          <s.SpacerSmall />
+                                          <input defaultValue={"0"} value={passCostToRent} type="text" 
+                                            style={{ width: "150px", height: "30px", fontSize: "25px", textAlign: "center", }} 
+                                            onChange={(e) => { updatePassRentCost(e); }} />
+                                        </s.Container>
+                                        <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                          style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }} >
+                                          <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
+                                            PURCHASE ALLOWED: 
+                                          </s.TextDescription>
+                                          <s.SpacerSmall />
+                                          <input type="checkbox" checked={passPurchaseAllowed} onChange={() => setPassPurchaseAllowed(!passPurchaseAllowed)} style={{height: '20px', width: '20px'}} />
+                                        </s.Container>
+                                        <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                          style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }} >
+                                          <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
+                                            PURCHASE COST: 
+                                          </s.TextDescription>
+                                          <s.SpacerSmall />
+                                          <input defaultValue={"0"} value={passCostToPurchase} type="text" 
+                                            style={{ width: "150px", height: "30px", fontSize: "25px", textAlign: "center", }} 
+                                            onChange={(e) => { updatePassPurchaseCost(e); }} />
+                                        </s.Container>
+                                        <s.Container 
+                                          ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                          style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }}>
+                                            { currentPassMode == PassMode.Update ? <>
+                                              <StyledButton disabled={txPending} onClick={(e) => { e.preventDefault(); updatePasses(); }}>
+                                                {txPending ? "BUSY" : "UPDATE"}
+                                              </StyledButton>
+                                              <s.SpacerSmall />
+                                              <StyledButton disabled={txPending} onClick={(e) => { e.preventDefault(); withdrawPasses(); }}>
+                                                {txPending ? "BUSY" : "WITHDRAW"}
+                                              </StyledButton>
+                                            </> : 
+                                            <>
+                                              <StyledButton disabled={txPending} onClick={(e) => { e.preventDefault(); depositPasses(); }}>
+                                                {txPending ? "BUSY" : "DEPOSIT"}
+                                              </StyledButton>
+                                            </> }
+                                        </s.Container>
+                                        <s.Container
+                                          ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                          style={{display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }}>
+                                            <s.TextDescription style={{ color: "#FFFFFF", fontSize: "30px", }}>
+                                              {feedback}
+                                            </s.TextDescription>
+                                        </s.Container>
+                                      </s.Container>
+                                    </> : null}
+
+
+                                    { (currentPassMode == PassMode.Rent || currentPassMode == PassMode.Extend) && (currentPassRentalAllowed || currentPassPurchaseAllowed) ? <>
+                                      <s.Container
+                                        ai={"center"} jc={"center"} fd="column" fw={"wrap"}
+                                        style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }} >
+                                        { currentPassRentalAllowed ? <>
+                                          <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                            style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }} >
+                                            <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
+                                              HOURS TO RENT: 
+                                            </s.TextDescription>
+                                            <s.SpacerSmall />
+                                            <input defaultValue={"0"} value={currentPassRentalHours} type="text" 
+                                              style={{ width: "150px", height: "30px", fontSize: "25px", textAlign: "center", }} 
+                                              onChange={(e) => { updatePassRentHours(e); }} />
+                                          </s.Container>
+                                          <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                            style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }} >
+                                            <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
+                                              RENTAL COST / HR: {currentPassRentalCost / 10**6 / 10**3}E
+                                            </s.TextDescription>
+                                          </s.Container>
+                                          <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                            style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }} >
+                                            <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
+                                              RENTAL COST TOTAL: {currentPassRentalCostTotal / 10**6 / 10**3}E
+                                            </s.TextDescription>
+                                          </s.Container>
+                                        </> : null }
+                                        { currentPassPurchaseAllowed ? <>
+                                          <s.Container ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                            style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }} >
+                                            <s.TextDescription style={{ color: "#FFFFFF", fontSize: "20px", }}>
+                                              PURCHASE COST: {currentPassPurchaseCost / 10**6 / 10**3}E
+                                            </s.TextDescription>
+                                          </s.Container>
+                                        </> : null }
+                                        <s.Container 
+                                          ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                          style={{ display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }}>
+                                            <StyledButton disabled={txPending} onClick={(e) => { e.preventDefault(); rentPass(); }}>
+                                              {txPending ? "BUSY" : "RENT"}
+                                            </StyledButton>
+                                            { currentPassPurchaseAllowed ? <>
+                                              <s.SpacerSmall />
+                                              <StyledButton disabled={txPending} onClick={(e) => { e.preventDefault(); purchasePass(); }}>
+                                                {txPending ? "BUSY" : "PURCHASE"}
+                                              </StyledButton>
+                                            </> : null }
+                                        </s.Container>
+                                        <s.Container
+                                          ai={"center"} jc={"center"} fd="row" fw={"wrap"}
+                                          style={{display: "flex", backgroundColor: "#111111", padding: "10px", width: "fit-content", }}>
+                                            <s.TextDescription style={{ color: "#FFFFFF", fontSize: "30px", }}>
+                                              {feedback}
+                                            </s.TextDescription>
+                                        </s.Container>
+                                      </s.Container>
+                                    </> : null}
+                              </> ) }
+
+                              {pass.spTokens.length > 0 && !pass.approvedForAll ? (
+                                <>
+                                  <s.SpacerLarge />
+                                  <s.TextDescription style={{ color: "#DFAA13", fontSize: "40px", textAlign: "center", }}>
+                                    YOU HAVE PASSES THAT COULD BE RENTED
+                                  </s.TextDescription>
+                                  <s.SpacerSmall />
+                                  <s.TextDescription style={{color: "#DFAA13", fontSize: "20px", textAlign: "center", }}>
+                                    TO USE THE PASS RENTAL SYSTEM EITHER SET APPROVAL FOR ALL USING THE BUTTON BELOW OR 
+                                    DEPOSIT YOUR PASSES BY SENDING THEM TO THE RENT MY PASS CONTRACT WITH 'safeTransferFrom' ON
+                                    THE SEWER PASS CONTRACT
+                                  </s.TextDescription>
+                                  <s.TextDescription style={{ color: "#DFAA13", fontSize: "20px", textAlign: "center", }} >
+                                    SEWER PASS ADDRESS: {CONFIG.SEWER_PASS_CONTRACT_ADDRESS}
+                                  </s.TextDescription>
+                                  <s.TextDescription style={{ color: "#DFAA13", fontSize: "20px", textAlign: "center", }} >
+                                    RENTMYPASS ADDRESS: {CONFIG.PLAY_MY_PASS_CONTRACT_ADDRESS}
+                                  </s.TextDescription>
+                                  <s.SpacerSmall />
+                                  <StyledButton disabled={txPending} onClick={(e) => { e.preventDefault(); approveRMP(); }} >
+                                    {txPending ? "BUSY" : "APPROVE FOR ALL"}
+                                  </StyledButton>
+                                  <s.SpacerMedium />
+                                </>) : null}
                             </s.Container>
                           </>
                         )}
