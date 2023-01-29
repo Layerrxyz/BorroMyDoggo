@@ -1411,7 +1411,19 @@ function App() {
                                   </s.Container>
                                   <s.SpacerMedium />
                                 </>
-                              ) : null}
+                              ) : 
+                                    <>
+                                      <s.TextDescription
+                                        style={{
+                                          color: "#FFFFFF",
+                                          fontSize: "30px",
+                                          textAlign: "center",
+                                        }}
+                                      >
+                                        NO PASSES AVAILABLE TO RENT
+                                      </s.TextDescription>
+                                    </>
+                                }
                               
                               {pass.myRentals.length > 0 ? (
                                 <>
